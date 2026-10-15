@@ -93,13 +93,13 @@
       var tipRest = Rules.flipperTip(geo, 0, Rules.REST);
       if (geo.diff.drainOpen) {
         g.save();
-        g.beginPath(); g.rect(6, 845, Math.max(10, tipRest.x - 24), 55); g.clip();
+        g.beginPath(); g.rect(geo.drainX0 + 4, 845, Math.max(10, tipRest.x - Rules.FLIP_R - geo.drainX0 - 4), 55); g.clip();
         g.strokeStyle = 'rgba(255,61,154,0.35)'; g.lineWidth = 6;
-        for (var x = -40; x < tipRest.x + 40; x += 16) { g.beginPath(); g.moveTo(x, 900); g.lineTo(x + 40, 845); g.stroke(); }
+        for (var x = geo.drainX0 - 50; x < tipRest.x + 40; x += 16) { g.beginPath(); g.moveTo(x, 900); g.lineTo(x + 40, 845); g.stroke(); }
         g.restore();
       } else {
         g.fillStyle = 'rgba(34,228,255,0.28)';
-        g.fillRect(6, geo.padY - 4, tipRest.x, 10);
+        g.fillRect(geo.drainX0 + 4, geo.padY - 4, tipRest.x - Rules.FLIP_R - geo.drainX0 - 4, 10);
       }
 
       /* 燈管牆 */
@@ -207,14 +207,14 @@
       g.save();
       g.fillStyle = 'rgba(244,247,255,0.14)';
       g.strokeStyle = 'rgba(244,247,255,0.9)'; g.lineWidth = 3;
-      g.beginPath(); g.rect(W - 14, hy - 86, 12, 120); g.fill(); g.stroke();
+      g.beginPath(); g.rect(W - 24, hy - 210, 22, 280); g.fill(); g.stroke();
       g.strokeStyle = 'rgba(255,122,26,0.95)';
-      g.strokeRect(W - 13, hy - 46, 10, 40);
+      g.strokeRect(W - 23, hy - 112, 20, 98);
       g.restore();
       var sw = r.netSway;
       g.save();
       g.strokeStyle = 'rgba(244,247,255,0.7)'; g.lineWidth = 1.6;
-      var depth = 46, n = 6;
+      var depth = 112, n = 6;
       for (var i = 0; i <= n; i++) {
         var u = i / n;
         var x0 = hx - hw + u * w, x1 = hx - hw * 0.6 + u * w * 0.6 + sw * 0.5;
@@ -232,12 +232,11 @@
       g.save();
       if (glow > 0) { g.shadowColor = C.yellow; g.shadowBlur = 40 * glow; }
       g.lineCap = 'round';
-      g.strokeStyle = C.orange; g.lineWidth = opts.contrast ? 8 : 6;
+      g.strokeStyle = C.orange; g.lineWidth = opts.contrast ? 16 : 14;
       g.beginPath(); g.moveTo(hx - w / 2, hy); g.lineTo(hx + w / 2, hy); g.stroke();
       g.shadowBlur = 0;
       g.fillStyle = '#ffd9b0';
-      g.beginPath(); g.arc(hx - w / 2, hy, 6, 0, Math.PI * 2); g.fill();
-      g.beginPath(); g.arc(hx + w / 2, hy, 6, 0, Math.PI * 2); g.fill();
+      g.beginPath(); g.arc(hx - w / 2, hy, 14, 0, Math.PI * 2); g.fill();
       g.restore();
     }
 

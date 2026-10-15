@@ -126,12 +126,18 @@
         <p class="muted" id="startHint"></p>
         <div class="card" id="inviteBox" hidden>
           <h3>邀請連結</h3>
-          <div class="actions wrap">
-            <button class="btn small" type="button" id="btnCopyPlay">複製玩家連結</button>
-            <button class="btn small" type="button" id="btnCopyWatch">複製觀戰連結</button>
-            <button class="btn small ghost" type="button" id="btnRegen">撤銷並重發</button>
+          <div class="linkrow">
+            <span class="linklabel">玩家</span>
+            <div class="linkbox" id="linkPlay" tabindex="0" role="textbox" aria-readonly="true" aria-label="玩家邀請連結"></div>
+            <button class="btn small" type="button" id="btnCopyPlay">複製</button>
           </div>
-          <p class="muted">連結只對這個房間有效，房間結束或撤銷後就失效。</p>
+          <div class="linkrow">
+            <span class="linklabel">觀戰</span>
+            <div class="linkbox" id="linkWatch" tabindex="0" role="textbox" aria-readonly="true" aria-label="觀戰邀請連結"></div>
+            <button class="btn small" type="button" id="btnCopyWatch">複製</button>
+          </div>
+          <div class="actions wrap"><button class="btn small ghost" type="button" id="btnRegen">撤銷並重發</button></div>
+          <p class="muted">連結只對這個房間有效，房間結束或撤銷後就失效。點連結文字可全選。</p>
         </div>
       </div>
       <div class="room-chat card" id="roomChatSlot"></div>

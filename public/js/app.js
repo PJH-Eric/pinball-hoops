@@ -900,9 +900,10 @@
     var li = h('li', { class: 'seat' });
     if (pl.isHost) li.appendChild(crown());
     li.appendChild(h('span', { class: 'nm', text: pl.name + (pl.id === room.you.id ? '（你）' : '') }));
+    if (pl.cpu) { st = [pl.skill || '電腦', 'ready']; }
     li.appendChild(h('span', { class: 'st ' + st[1], text: st[0] }));
     if (meIsHost && pl.id !== room.you.id && room.phase === 'lobby') {
-      var k = h('button', { class: 'btn small ghost', type: 'button', text: '請出' });
+      var k = h('button', { class: 'btn small ghost', type: 'button', text: pl.cpu ? '移除' : '請出' });
       k.addEventListener('click', function () { Net.send({ type: 'kick', id: pl.id }); });
       li.appendChild(k);
     }
@@ -929,7 +930,19 @@
 
     var seats = $('#seats'); seats.textContent = '';
     room.players.forEach(function (pl) { seats.appendChild(seatEl(pl, room)); });
-    for (var i = room.players.length; i < room.seats; i++) seats.appendChild(h('li', { class: 'seat empty' }, h('span', { class: 'nm', text: '空位' })));
+    for (var i = room.players.length; i < room.seats; i++) {
+      var es = h('li', { class: 'seat empty' }, h('span', { class: 'nm', text: '空位' }));
+      if (isHost && lobby) {
+        var pick = h('span', { class: 'cpu-pick', role: 'group', 'aria-label': '在這個空位加入電腦' }, h('small', { text: '加入電腦' }));
+        [['easy', '新手'], ['normal', '一般'], ['hard', '高手']].forEach(function (k) {
+          var cb = h('button', { type: 'button', class: 'btn small', text: k[1] });
+          cb.addEventListener('click', function () { Net.send({ type: 'add_cpu', skill: k[0] }); });
+          pick.appendChild(cb);
+        });
+        es.appendChild(pick);
+      }
+      seats.appendChild(es);
+    }
     $('#seatCount').textContent = room.players.length + '/' + room.seats;
     $('#specLine').textContent = room.specs.length ? '觀戰中：' + room.specs.map(function (s) { return s.name; }).join('、') : '目前沒有觀戰者';
 
@@ -956,11 +969,12 @@
       if (you.role === 'player') { rb.hidden = false; rb.disabled = false; rb.textContent = '再來一局'; sb.hidden = true; }
     }
     else if (you.role === 'spec') hint.textContent = '你是觀戰者，比賽開始時會自動看到對戰畫面。';
-    else if (isHost) hint.textContent = live.length < 2 ? '至少要 2 位玩家才能開始，把邀請連結傳給朋友吧。' : (allReady ? '大家都準備好了，可以開始！' : '還有玩家沒有準備好。');
+    else if (isHost) hint.textContent = live.length < 2 ? '至少要 2 位玩家才能開始：傳邀請連結給朋友，或在空位上選「加入電腦」。' : (allReady ? '大家都準備好了，可以開始！' : '還有玩家沒有準備好。');
     else hint.textContent = '準備好之後，等房主按開始。';
 
     var ib = $('#inviteBox');
     ib.hidden = !(isHost && room.invite);
+    if (!ib.hidden) { $('#linkPlay').textContent = inviteUrl('play'); $('#linkWatch').textContent = inviteUrl('watch'); }
     if (room.phase === 'ended') {
       /* 回到房間看結果時，這顆按鈕負責「再來一局」 */
     }

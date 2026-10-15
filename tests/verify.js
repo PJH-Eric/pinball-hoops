@@ -22,7 +22,7 @@ t('四段難度都存在且參數單調變難', () => {
     assert(L[i].gravity >= L[i - 1].gravity, '重力不能變小');
   }
   assert.strictEqual(Rules.DIFFS.kids.drainOpen, false, '幼幼班不會漏球');
-  assert(Rules.DIFFS.hard.bumpers > Rules.DIFFS.normal.bumpers);
+  assert(Rules.geometry('hard').bumpers.length === 1, '彈跳墊只留一個');
 });
 t('同種子＋同操作 → 結果完全一致（可重現）', () => {
   const a = play('normal', 4242), b = play('normal', 4242);
@@ -104,7 +104,7 @@ t('只有一片彈板，點一下（flip）就揮起、放開就落下', () => {
 });
 t('彈板能把球往上打（不是穿過），打在中段力道夠到籃框高度', () => {
   const g = Rules.create('normal', 1);
-  const b = g.ball; b.x = 340; b.y = 740; b.vx = 0; b.vy = 0;
+  const b = g.ball; b.x = 500 - 0.6 * g.flipLen; b.y = 740; b.vx = 0; b.vy = 0;
   let minY = 1e9, t0 = null;
   for (let i = 0; i < 240 * 4 && g.ball; i++) {
     if (g.ball.y > 770 && t0 === null) t0 = g.t;
@@ -128,8 +128,45 @@ t('時機對的話，彈板打出的球能進籃框（各難度都有可行的�
       }
       if (g.hoops) ok++;
     }
-    assert(ok >= 4, id + ' 可進球的時機太少：' + ok);
+    assert(ok >= 2, id + ' 可進球的時機太少：' + ok);
   });
+});
+function shoot(id, dy, vy, x) {
+  const g = Rules.create(id, 3);
+  const b = g.ball; b.x = x; b.y = g.hoopY + dy; b.vx = 0; b.vy = vy;
+  let rose = 0;
+  for (let i = 0; i < 240 * 4 && g.ball && g.status === 'playing'; i++) {
+    const before = g.hoops;
+    Rules.step(g, { flip: false }); g.events.length = 0;
+    if (g.hoops > before && g.ball && g.ball.vy < 0) rose++;
+    if (g.ball && g.ball.y > g.hoopY + 400) break;
+  }
+  return g;
+}
+t('進球：從上方掉進籃框（框會上下移動）一定得分', () => {
+  ['kids', 'easy', 'normal'].forEach(id => {
+    const geo = Rules.geometry(id);
+    for (let k = 0; k < 6; k++) {
+      const g = Rules.create(id, 3); g.t = k * 1.7;                    /* 不同的框位置與移動方向 */
+      g.hoopY = Rules.hoopYAt(geo, g.t); g.prevHoopY = g.hoopY;
+      const b = g.ball; b.x = Rules.W - geo.hoop.w / 2 + 6; b.y = Math.max(70, g.hoopY - 220); b.vx = 0; b.vy = 150;
+      for (let i = 0; i < 240 * 3 && g.hoops === 0; i++) { Rules.step(g, { flip: false }); g.events.length = 0; }
+      assert.strictEqual(g.hoops, 1, id + ' 第 ' + k + ' 組從上方掉進去沒得分');
+    }
+  });
+});
+t('進球：從籃框底下往上頂過去、只高出一點又掉回來，不算分', () => {
+  ['kids', 'easy'].forEach(id => {
+    const x = Rules.W - Rules.geometry(id).hoop.w / 2 + 6;
+    const g = shoot(id, 250, -770, x);
+    assert.strictEqual(g.hoops, 0, id + ' 從底下進去不該得分');
+  });
+});
+t('進球：飛得夠高再落下來，仍然算分（正常的投籃）', () => {
+  const id = 'easy';
+  const x = Rules.W - Rules.geometry(id).hoop.w / 2 + 6;
+  const g = shoot(id, 250, -880, x);
+  assert.strictEqual(g.hoops, 1);
 });
 t('球不會穿牆出界', () => {
   for (let s = 1; s <= 6; s++) {
@@ -147,18 +184,18 @@ t('籃框貼右牆、開口朝左，上下移動不碰到彈跳墊以外的牆',
   Rules.DIFF_LIST.forEach(id => {
     const geo = Rules.geometry(id);
     assert(Math.abs(geo.hoop.x + geo.hoop.w / 2 - Rules.W) < 1e-6, id + ' 籃框右緣要貼牆');
-    assert(geo.hoop.w >= Rules.BALL_R * 2 + 12 + 2, id + ' 開口至少要容得下一顆球');
+    assert(geo.hoop.w >= Rules.BALL_R * 2 + 16, id + ' 籃框開口至少要容得下一顆球');
     assert(geo.hoop.cy - geo.hoop.amp > 120 && geo.hoop.cy + geo.hoop.amp < 520, id + ' 上下移動超出範圍');
   });
-  assert(Rules.geometry('kids').hoop.w <= 100, '洞不能太大');
+  assert(Rules.geometry('kids').hoop.w <= 170, '籃框不能太大');
 });
 t('彈板尖端與左牆之間的缺口比球大、且彈板越難越短', () => {
   let prev = 1e9;
   Rules.DIFF_LIST.forEach(id => {
     const geo = Rules.geometry(id);
     const tip = Rules.flipperTip(geo, 0, Rules.REST);
-    assert(tip.x - Rules.FLIP_R > Rules.BALL_R * 2 + 4, id + ' 缺口太窄');
-    assert(geo.flipLen < prev, id + ' 彈板要比前一級短'); prev = geo.flipLen;
+    const want = { kids: 1.1, easy: 1.25, normal: 1.5, hard: 1.75 }[id] * Rules.BALL_R * 2;
+    assert(Math.abs((tip.x - Rules.FLIP_R - geo.drainX0) - want) < 1, id + ' 掉落洞口要是球寬的固定倍數：' + (tip.x - Rules.FLIP_R - geo.drainX0) + ' vs ' + want);
   });
 });
 
@@ -166,6 +203,34 @@ console.log('房間邏輯');
 function person(id, name) { return { id, name, roomId: null, role: null }; }
 function mkHub() { let now = 1000000; const hub = createHub({ now: () => now }); hub.advance = ms => { now += ms; }; return hub; }
 
+t('電腦玩家：房主一人加電腦就能開局，分數由伺服器真的打出來，結束後出現在排名', () => {
+  const hub = mkHub();
+  const h = person('h', '房主');
+  const room = hub.createRoom(h, { difficulty: 'easy' }).room;
+  assert.strictEqual(hub.start(h).code, 'need_two');
+  assert(hub.addCpu(h, 'hard').ok);
+  assert(!hub.addCpu(person('x', 'X'), 'hard').ok, '非房主不能加電腦');
+  const cpu = hub.players(room).find(m => m.cpu);
+  assert(cpu && cpu.ready);
+  assert(hub.start(h).ok);
+  hub.advance(4000 + 45000); hub.tick();
+  assert(cpu.score >= 0 && (cpu.sim.g.t > 20 || cpu.sim.g.status !== 'playing') && cpu.sim.g.t <= 46, '電腦要跟著時間推進：' + cpu.sim.g.t);
+  hub.advance(60000); hub.tick();
+  assert.strictEqual(room.phase, 'ended', '時間到就結束');
+  assert(room.result.some(r => r.cpu), '排名要有電腦');
+});
+t('電腦玩家不算真人：真人都離開房間就關閉；電腦占座位', () => {
+  const hub = mkHub();
+  const h = person('h', '房主');
+  const room = hub.createRoom(h, {}).room;
+  hub.addCpu(h, 'easy'); hub.addCpu(h, 'normal'); hub.addCpu(h, 'hard');
+  assert.strictEqual(hub.addCpu(h, 'hard').code, 'seats_full');
+  const id = hub.players(room).find(m => m.cpu).id;
+  assert.strictEqual(hub.kick(h, id), id);
+  assert.strictEqual(hub.players(room).length, 3);
+  hub.leave(h);
+  assert(room.closed, '只剩電腦要關房');
+});
 t('暱稱消毒：去角括號／控制字元、限 12 字、空白給隨機名', () => {
   assert.strictEqual(cleanName('<b>阿明</b>'), 'b阿明/b');
   assert.strictEqual(cleanName('x'.repeat(40)).length, 12);

@@ -15,7 +15,7 @@
 
   var W = 600, H = 900;
   var STEP = 1 / 240;
-  var BALL_R = 14;
+  var BALL_R = 38;
   var MAX_SPEED = 1700;
   var REST = 0.16;             /* 彈板放下時的仰角（尖端略低） */
   var ACTIVE = -0.62;          /* 彈板揮起時的仰角 */
@@ -29,23 +29,23 @@
   var DIFFS = {
     kids: {
       id: 'kids', name: '幼幼班', blurb: '籃框超大、不會漏球，慢慢玩',
-      duration: 120, balls: 0, gravity: 0.85, hoopW: 100, hoopAmp: 0, hoopFreq: 0.08,
-      flipLen: 300, pivotX: 500, drainOpen: false, bumpers: 2
+      duration: 120, balls: 0, gravity: 0.85, hoopW: 170, hoopAmp: 0, hoopFreq: 0.08,
+      drainK: 1.1, flipLen: 280, pivotX: 500, drainOpen: false, bumpers: 1
     },
     easy: {
       id: 'easy', name: '簡單', blurb: '籃框大、動得慢，有 5 顆球',
-      duration: 90, balls: 5, gravity: 0.85, hoopW: 68, hoopAmp: 40, hoopFreq: 0.10,
-      flipLen: 270, pivotX: 500, drainOpen: true, bumpers: 3
+      duration: 90, balls: 5, gravity: 0.85, hoopW: 140, hoopAmp: 40, hoopFreq: 0.10,
+      drainK: 1.25, flipLen: 250, pivotX: 500, drainOpen: true, bumpers: 1
     },
     normal: {
       id: 'normal', name: '普通', blurb: '標準籃框，3 顆球',
-      duration: 90, balls: 3, gravity: 1.0, hoopW: 58, hoopAmp: 70, hoopFreq: 0.16,
-      flipLen: 250, pivotX: 500, drainOpen: true, bumpers: 3
+      duration: 90, balls: 3, gravity: 1.0, hoopW: 114, hoopAmp: 70, hoopFreq: 0.16,
+      drainK: 1.5, flipLen: 230, pivotX: 500, drainOpen: true, bumpers: 1
     },
     hard: {
       id: 'hard', name: '困難', blurb: '籃框小又快，漏球空隙大',
-      duration: 90, balls: 3, gravity: 1.12, hoopW: 50, hoopAmp: 100, hoopFreq: 0.26,
-      flipLen: 225, pivotX: 500, drainOpen: true, bumpers: 5
+      duration: 90, balls: 3, gravity: 1.12, hoopW: 95, hoopAmp: 100, hoopFreq: 0.26,
+      drainK: 1.75, flipLen: 205, pivotX: 500, drainOpen: true, bumpers: 1
     }
   };
   var DIFF_LIST = ['kids', 'easy', 'normal', 'hard'];
@@ -63,23 +63,38 @@
       { ax: 0, ay: 150, bx: 150, by: 0, e: 0.45 },
       { ax: 150, ay: 0, bx: W - 50, by: 0, e: 0.35 },
       { ax: W - 50, ay: 0, bx: W, by: 50, e: 0.3 },
-      { ax: W, ay: 50, bx: W, by: 600, e: 0.22 },
-      { ax: W, ay: 600, bx: px + 4, by: PIVOT_Y - 6, e: 0.3 }
+      { ax: W, ay: 50, bx: W, by: 280, e: 0.22 },
+      { ax: W, ay: 320, bx: W, by: 280, e: 0.22 }
     ];
-    var bumpers;
-    if (d.bumpers <= 2) bumpers = [{ x: 170, y: 420, r: 34 }, { x: 360, y: 500, r: 34 }];
-    else if (d.bumpers === 3) bumpers = [{ x: 160, y: 400, r: 34 }, { x: 330, y: 360, r: 32 }, { x: 250, y: 540, r: 34 }];
-    else bumpers = [
-      { x: 150, y: 380, r: 30 }, { x: 330, y: 340, r: 30 }, { x: 240, y: 500, r: 30 },
-      { x: 90, y: 560, r: 26 }, { x: 400, y: 520, r: 26 }
-    ];
+    /* 右下角圓弧導板（像四分之一圓管）：貼著右牆垂直切入，越往下越平，滑向彈板轉軸 */
+    segs.pop();
+    (function () {
+      var a = 150, cx = W - a, cy = 280, phm = Math.acos((px + 4 - cx) / a), b = (PIVOT_Y - 6 - cy) / Math.sin(phm), N = 14, prev = { x: W, y: cy }, k, ph, pt;
+      for (k = 1; k <= N; k++) {
+        ph = (k / N) * (phm);
+        pt = { x: cx + a * Math.cos(ph), y: cy + b * Math.sin(ph) };
+        segs.push({ ax: prev.x, ay: prev.y, bx: pt.x, by: pt.y, e: 0.3 });
+        prev = pt;
+      }
+      if (Math.abs(prev.x - (px + 4)) > 1) segs.push({ ax: prev.x, ay: prev.y, bx: px + 4, by: PIVOT_Y - 6, e: 0.3 });
+    })();
+    /* 只留一個彈跳墊，擺在球場中間偏左 */
+    /* 掉落洞口（彈板尖端與左下導板之間的缺口）寬度＝球寬的 drainK 倍：幼幼班 1.1／簡單 1.25／普通 1.5／困難 1.75（越難洞口越大） */
+    var flipLen = d.flipLen;
+    var tipX = px - Math.cos(REST) * flipLen;
+    var drainW = d.drainK * 2 * BALL_R;
+    var xL = Math.max(20, tipX - FLIP_R - drainW);
+    segs.push({ ax: 0, ay: 560, bx: xL, by: 745, e: 0.3 });        /* 左下導板：把球導向洞口 */
+    segs.push({ ax: xL, ay: 745, bx: xL, by: 960, e: 0.3 });
+    var bumpers = [{ x: 230, y: 430, r: 34 }];
     var geo = {
       W: W, H: H, segs: segs, bumpers: bumpers, diff: d,
       pivots: [{ x: px, y: PIVOT_Y }],
       flipDir: -1,                   /* 樞軸在右、尖端朝左 */
-      flipLen: d.flipLen,
+      flipLen: flipLen,
       /* 籃框固定在右牆上、開口朝左：籃板貼右牆，框從牆邊往左伸出；只會慢慢上下移動 */
       hoop: { w: d.hoopW, x: W - d.hoopW / 2, cy: 260, amp: d.hoopAmp, freq: d.hoopFreq },
+      drainX0: xL, drainW: drainW,
       padY: 888                      /* 幼幼班的彈力墊（不漏球） */
     };
     geoCache[diffId] = geo;
@@ -107,7 +122,7 @@
       ball: null,
       fl: [{ a: REST, w: 0 }],
       prevFlip: false,
-      hoopX: hoopXAt(geo), hoopY: hoopYAt(geo, 0),
+      hoopX: hoopXAt(geo), hoopY: hoopYAt(geo, 0), prevHoopY: hoopYAt(geo, 0),
       bumperFlash: geo.bumpers.map(function () { return 0; }),
       bumperCd: geo.bumpers.map(function () { return 0; }),
       stuckT: 0,
@@ -123,7 +138,7 @@
     g.ballNo++;
     g.ball = {
       x: 455 + r1 * 90, y: 300, vx: -(70 + r2 * 150), vy: 0,
-      r: BALL_R, rim: false, armed: true, spin: 0
+      r: BALL_R, rim: false, armed: true, fromBelow: false, spin: 0
     };
     g.stuckT = 0;
     g.events.push({ type: 'serve' });
@@ -186,6 +201,7 @@
     var geo = g.geo, d = g.diff, dt = STEP;
     g.t += dt;
     g.hoopX = geo.hoop.x;
+    g.prevHoopY = g.hoopY;
     g.hoopY = hoopYAt(geo, g.t);
     var k;
     for (k = 0; k < g.bumperFlash.length; k++) {
@@ -270,15 +286,21 @@
 
     /* 籃框的兩根框柱 */
     var hw = geo.hoop.w / 2;
-    h = hitCircle(b, g.hoopX - hw, g.hoopY, 6, 0.5);      /* 前緣框柱；後面就是右牆（籃板） */
+    h = hitCircle(b, g.hoopX - hw, g.hoopY, 14, 0.5);      /* 前緣框柱；後面就是右牆（籃板） */
     if (h) {
       b.rim = true;
       if (h.impact > 90) g.events.push({ type: 'rim', power: Math.min(1, h.impact / 700) });
     }
 
-    /* 進球判定：球心由上往下穿過框線，且在兩根框柱之間 */
-    if (b.armed && prevY < g.hoopY && b.y >= g.hoopY && b.vy > 0 &&
-        b.x > g.hoopX - hw + 4 && b.x < W) {
+    /* 進球判定：球心「相對於會上下移動的籃框」由上往下穿過框線，且在框柱與右牆之間。
+       從籃框底下往上頂過框、球心連一顆球半徑都沒高過框線就掉回來（fromBelow）不算分；整顆球飛過框線之後再落下，就算正常投籃。 */
+    var prevRel = prevY - g.prevHoopY, rel = b.y - g.hoopY;
+    var inMouth = b.x > g.hoopX - hw + 4 && b.x < W;
+    if (prevRel >= 0 && rel < 0 && inMouth) b.fromBelow = true;
+    if (rel > 90 || rel < -BALL_R) b.fromBelow = false;     /* 球整顆飛過框線上方（或沉到框下很深），就算是新的一球 */
+    var crossedDown = prevRel < 0 && rel >= 0 && inMouth;
+    if (crossedDown && b.fromBelow) { b.fromBelow = false; crossedDown = false; }
+    if (b.armed && crossedDown) {
       var swish = !b.rim;
       g.combo = (g.t - g.lastScoreT <= COMBO_WINDOW) ? Math.min(COMBO_MAX, g.combo + 1) : 1;
       if (g.combo > g.bestCombo) g.bestCombo = g.combo;
