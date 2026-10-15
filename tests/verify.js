@@ -229,6 +229,20 @@ t('電腦玩家：房主一人加電腦就能開局，分數由伺服器真的�
   assert.strictEqual(room.phase, 'ended', '時間到就結束');
   assert(room.result.some(r => r.cpu), '排名要有電腦');
 });
+t('在指定空位加入電腦，電腦停在該位置，後加入的玩家補最小空位', () => {
+  const hub = mkHub();
+  const h = person('h', '房主');
+  const room = hub.createRoom(h, {}).room;
+  hub.addCpu(h, 'easy', 2);
+  hub.addCpu(h, 'easy', 2);                                  /* 2 號已被占用 → 改放編號最小的空位 */
+  const g = person('g', '客人'); hub.join(g, room.id, { want: 'play' });
+  const seats = hub.viewFor(room, 'h').players.map(p => p.id === 'h' ? 'h' : p.id === 'g' ? 'g' : 'cpu@' + p.seat);
+  assert.deepStrictEqual(hub.players(room).map(m => m.seat), [0, 1, 2, 3], '四個座位都被坐滿且不重複');
+  assert.strictEqual(hub.players(room)[2].cpu, true, '指定的 2 號座位是電腦');
+  assert.strictEqual(hub.players(room)[1].cpu, true, '第二隻電腦補最小空位 1');
+  assert.strictEqual(hub.players(room)[3].id, 'g', '客人補剩下的 3');
+  assert(seats.length === 4);
+});
 t('電腦玩家不算真人：真人都離開房間就關閉；電腦占座位', () => {
   const hub = mkHub();
   const h = person('h', '房主');

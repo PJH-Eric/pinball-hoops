@@ -1017,14 +1017,16 @@
     $('#listedRow').hidden = !isHost;
 
     var seats = $('#seats'); seats.textContent = '';
-    room.players.forEach(function (pl) { seats.appendChild(seatEl(pl, room)); });
-    for (var i = room.players.length; i < room.seats; i++) {
+    var bySeat = {};
+    room.players.forEach(function (pl, idx) { bySeat[pl.seat == null ? idx : pl.seat] = pl; });
+    for (var i = 0; i < room.seats; i++) {
+      if (bySeat[i]) { seats.appendChild(seatEl(bySeat[i], room)); continue; }
       var es = h('li', { class: 'seat empty' }, h('span', { class: 'nm', text: '空位' }));
       if (isHost && lobby) {
         var pick = h('span', { class: 'cpu-pick', role: 'group', 'aria-label': '在這個空位加入電腦' }, h('small', { text: '加入電腦' }));
         [['easy', '新手'], ['normal', '一般'], ['hard', '高手']].forEach(function (k) {
           var cb = h('button', { type: 'button', class: 'btn small', text: k[1] });
-          cb.addEventListener('click', function () { Net.send({ type: 'add_cpu', skill: k[0] }); });
+          (function (seatNo) { cb.addEventListener('click', function () { Net.send({ type: 'add_cpu', skill: k[0], seat: seatNo }); }); })(i);
           pick.appendChild(cb);
         });
         es.appendChild(pick);

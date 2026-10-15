@@ -151,7 +151,7 @@ function handle(person, msg) {
     case 'difficulty': hub.setDifficulty(person, msg.value); break;
     case 'listed': hub.setListed(person, msg.value); break;
     case 'invite_regen': hub.regenInvite(person); break;
-    case 'add_cpu': { const r = hub.addCpu(person, msg.skill); if (r && !r.ok) errorTo(id, r.code, ERR[r.code] || (r.code === 'seats_full' ? '座位已滿' : '不能這樣做')); break; }
+    case 'add_cpu': { const r = hub.addCpu(person, msg.skill, msg.seat); if (r && !r.ok) errorTo(id, r.code, ERR[r.code] || (r.code === 'seats_full' ? '座位已滿' : '不能這樣做')); break; }
     case 'kick': hub.kick(person, String(msg.id || '')); break;
     case 'start': {
       const r = hub.start(person);
