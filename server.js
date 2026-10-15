@@ -193,7 +193,9 @@ function counts() {
     players += hub.livePlayers(room).length;
     spectators += hub.specs(room).length;
   }
-  return { players, spectators };
+  let lobby = 0;
+  for (const it of people.values()) if (!it.person.roomId) lobby++;
+  return { players, spectators, lobby };
 }
 
 const server = http.createServer((req, res) => {
@@ -204,7 +206,7 @@ const server = http.createServer((req, res) => {
   if (url === '/api/presence') {
     const c = counts();
     json(res, 200, { gameId: GAME_ID, online: people.size, players: c.players, spectators: c.spectators,
-      rooms: hub.rooms.size, updatedAt: new Date().toISOString() });
+      lobby: c.lobby, rooms: hub.rooms.size, updatedAt: new Date().toISOString() });
     return;
   }
   if (url === '/api/rooms') { json(res, 200, { rooms: hub.listRooms(), seats: CONST.SEATS }); return; }

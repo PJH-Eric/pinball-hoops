@@ -33,7 +33,7 @@ npm run verify     # 以上全部
 3. 在 repo 的 Actions Variables 設 `GAME_SERVER_URL`＝Render 的 HTTPS 網址（也可手動執行 workflow 時填）。
 4. 前端只從 `public/js/config.js` 讀取伺服器位置（優先序：`?server=` → 建置注入 → 同源），不寫死網址、不回退 localhost。
 - Render 免費方案會休眠，前端會顯示「喚醒伺服器中」；房間只存在記憶體，重啟後消失。
-- 健康檢查：`/health`；大廳人數：`/api/presence`。
+- 健康檢查：`/health`；遊戲大廳（game-lobby）人數：`/api/presence`，回傳 `online／players／spectators／lobby／rooms`。
 
 ## 目錄
 `public/js/rules.js` 規則與物理（瀏覽器與伺服器共用）／`render.js` Canvas 繪圖／`audio.js` 合成音效（無外部音檔）／`net.js` 連線／`app.js` 畫面；`lib/rooms.js` 房間邏輯；`server.js` HTTP＋WebSocket。
