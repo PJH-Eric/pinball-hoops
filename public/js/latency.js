@@ -169,6 +169,15 @@
       return;
     }
     const level = stackLevel(anchor.el);
+    // data-dock="left"：永遠固定在設定鈕左側同一列，頁面用 html.latency-on 替自己預留空間（不再自動找空位）
+    if (script && script.dataset.dock === 'left') {
+      meter.classList.add('is-docked');
+      meter.classList.remove('is-compact');
+      meter.style.zIndex = level === null ? '' : String(level);
+      meter.dataset.spot = 'left';
+      placeAt(r.left - GAP - meter.offsetWidth, r.top + (r.height - meter.offsetHeight) / 2);
+      return;
+    }
     meter.classList.add('is-docked');
     meter.style.zIndex = level === null ? '' : String(level);
 
@@ -227,6 +236,7 @@
     const next = !!on;
     if (active === next) return;
     active = next;
+    document.documentElement.classList.toggle('latency-on', active);
     clearInterval(timer);
     clearInterval(dockTimer);
     timer = 0;

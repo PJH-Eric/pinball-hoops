@@ -111,11 +111,12 @@
     return geo.hoop.cy + geo.hoop.amp * Math.sin(2 * Math.PI * geo.hoop.freq * t);
   }
 
-  function create(diffId, seed) {
+  /** unlimitedBalls：對戰模式不限球數，只有時間到才結束 */
+  function create(diffId, seed, unlimitedBalls) {
     var d = DIFFS[diffId] || DIFFS.normal;
     var geo = geometry(d.id);
     var g = {
-      diff: d, geo: geo, seed: seed >>> 0,
+      diff: d, geo: geo, seed: seed >>> 0, unlimited: !!unlimitedBalls,
       t: 0, acc: 0, status: 'playing', overReason: null,
       score: 0, hoops: 0, swishes: 0, bumps: 0, combo: 0, bestCombo: 0, lastScoreT: -99,
       ballNo: 0, serveIndex: 0, respawnAt: 0, overAt: 0,
@@ -333,7 +334,7 @@
       g.ball = null;
       g.events.push({ type: 'drain' });
       g.combo = 0;
-      if (d.balls > 0 && g.ballNo >= d.balls) {
+      if (!g.unlimited && d.balls > 0 && g.ballNo >= d.balls) {
         g.overAt = g.t + 0.9;
       } else {
         g.respawnAt = g.t + 0.9;

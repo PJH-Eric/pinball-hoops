@@ -92,3 +92,5 @@
 #network-latency[data-skin="pinball-hoops"].is-good { --meter-dot: #22e4ff; --meter-tint: #5bf0c8; }
 #network-latency[data-skin="pinball-hoops"].is-warn { --meter-dot: #ffe14d; --meter-tint: #ffe14d; --meter-edge: #ffe14d; }
 #network-latency[data-skin="pinball-hoops"].is-bad  { --meter-dot: #ff3d9a; --meter-tint: #ff7ab8; --meter-edge: #ff3d9a; }
+/* 線上時 HUD／標題列替延遲框（約 70px）多留一段 */
+html.latency-on #hud, html.latency-on .bar { padding-right: 130px; }

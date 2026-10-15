@@ -271,7 +271,7 @@
     var online = o.mode === 'online' || o.mode === 'spec';
     play = {
       mode: o.mode, diff: o.diff, seed: o.seed, roomId: o.roomId || null, round: o.round || 0,
-      g: o.mode === 'spec' ? null : Rules.create(o.diff, o.seed),
+      g: o.mode === 'spec' ? null : Rules.create(o.diff, o.seed, o.mode === 'online'),
       startAt: o.startAt || 0, cd: 3.2, cdShown: 0, running: false, paused: false, over: false,
       lastReport: 0, lastSnap: 0, lastScore: -1, resultShown: false, newBest: false,
       focus: null, disp: null, snaps: {}
@@ -387,7 +387,7 @@
           break;
         case 'drain':
           sfx('drain'); vibrate(80);
-          rend.pop(300, 800, g.diff.balls > 0 && g.ballNo >= g.diff.balls ? '球用完了' : '漏球！', '#ff3d9a');
+          rend.pop(300, 800, !g.unlimited && g.diff.balls > 0 && g.ballNo >= g.diff.balls ? '球用完了' : '漏球！', '#ff3d9a');
           onlineReportSoon();
           break;
       }
@@ -488,7 +488,7 @@
     } else {
       score = g.score; left = Rules.timeLeft(g); total = g.diff.duration; combo = g.combo;
       if (g.t - g.lastScoreT > Rules.COMBO_WINDOW) combo = 0;
-      balls = g.diff.balls;
+      balls = g.unlimited ? 0 : g.diff.balls;
     }
     setText('hScore', String(score));
     setText('hTime', String(Math.ceil(left)));
