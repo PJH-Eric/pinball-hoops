@@ -287,7 +287,7 @@
     play = {
       mode: o.mode, diff: o.diff, seed: o.seed, roomId: o.roomId || null, round: o.round || 0,
       g: o.mode === 'spec' ? null : Rules.create(o.diff, o.seed, o.mode === 'online'),
-      startAt: o.startAt || 0, cd: 3.2, cdShown: 0, running: false, paused: false, over: false,
+      startAt: o.startAt || 0, cd: 3, cdShown: 0, running: false, paused: false, over: false,
       lastReport: 0, lastSnap: 0, lastScore: -1, resultShown: false, newBest: false,
       focus: null, disp: null, snaps: {}, opps: {}, oppKey: ''
     };

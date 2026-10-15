@@ -223,7 +223,7 @@ t('電腦玩家：房主一人加電腦就能開局，分數由伺服器真的�
   const cpu = hub.players(room).find(m => m.cpu);
   assert(cpu && cpu.ready);
   assert(hub.start(h).ok);
-  hub.advance(4000 + 45000); hub.tick();
+  hub.advance(3000 + 45000); hub.tick();
   assert(cpu.score >= 0 && (cpu.sim.g.t > 20 || cpu.sim.g.status !== 'playing') && cpu.sim.g.t <= 46, '電腦要跟著時間推進：' + cpu.sim.g.t);
   hub.advance(60000); hub.tick();
   assert.strictEqual(room.phase, 'ended', '時間到就結束');
@@ -295,7 +295,7 @@ t('分數回報：單調遞增、超過物理速度的值會被丟掉', () => {
   const h = person('h', 'H'), a = person('a', 'A');
   const room = hub.createRoom(h, { difficulty: 'normal' }).room;
   hub.join(a, room.id, {}); hub.setReady(a, true); hub.start(h);
-  hub.advance(4000 + 10000);
+  hub.advance(3000 + 10000);
   hub.report(a, { score: 50, hoops: 2 });
   assert.strictEqual(room.members.get('a').score, 50);
   hub.report(a, { score: 20 });
@@ -308,7 +308,7 @@ t('全部完成或時間到 → 結束並排名（同分同名次）', () => {
   const h = person('h', 'H'), a = person('a', 'A');
   const room = hub.createRoom(h, { difficulty: 'normal' }).room;
   hub.join(a, room.id, {}); hub.setReady(a, true); hub.start(h);
-  hub.advance(4000 + 30000);
+  hub.advance(3000 + 30000);
   hub.report(h, { score: 100, done: true });
   hub.report(a, { score: 100, hoops: 1, done: true });
   assert.strictEqual(room.phase, 'ended');
@@ -323,7 +323,7 @@ t('時間到＋寬限後即使有人沒回報也會結束', () => {
   const h = person('h', 'H'), a = person('a', 'A');
   const room = hub.createRoom(h, { difficulty: 'normal' }).room;
   hub.join(a, room.id, {}); hub.setReady(a, true); hub.start(h);
-  hub.advance(4000 + 90000 + 3600);
+  hub.advance(3000 + 90000 + 3600);
   hub.tick();
   assert.strictEqual(room.phase, 'ended');
 });
