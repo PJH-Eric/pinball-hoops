@@ -279,6 +279,7 @@
     app.dataset.online = online ? '1' : '0';
     app.dataset.solo = online ? '0' : '1';
     app.dataset.spectator = o.mode === 'spec' ? '1' : '0';
+    $('#btnPause').textContent = o.mode === 'solo' ? '暫停' : '離開';
     if (o.mode === 'spec') { play.running = true; buildSpecTabs(); }
     go('play');
     applyPanelMode(true);
@@ -554,7 +555,31 @@
   if (wideMq.addEventListener) wideMq.addEventListener('change', function () { applyPanelMode(true); });
   $('#panelToggle').addEventListener('click', function () { panelOpen = !panelOpen; applyPanelMode(); sfx('ui'); });
   $('#panelClose').addEventListener('click', function () { panelOpen = false; applyPanelMode(); sfx('ui'); });
-  $('#btnPause').addEventListener('click', function () { if (play && play.mode === 'solo' && play.running && !play.over) pauseSolo(!play.paused); });
+  $('#btnPause').addEventListener('click', function () {
+    if (!play) return;
+    if (play.mode === 'solo') { if (play.running && !play.over) pauseSolo(!play.paused); }
+    else confirmLeaveOnline();
+  });
+
+  /* 線上不能暫停（其他人還在打），但可以隨時離開：先確認，比賽不會因此中斷 */
+  function confirmLeaveOnline() {
+    if (document.getElementById('leaveModal')) return;
+    var isSpec = play.mode === 'spec';
+    var back = h('div', { class: 'modal-back', id: 'leaveModal' });
+    function close() { back.remove(); }
+    var stay = h('button', { class: 'btn primary', type: 'button', text: '繼續比賽' });
+    var quit = h('button', { class: 'btn ghost', type: 'button', text: '離開' });
+    stay.addEventListener('click', close);
+    quit.addEventListener('click', function () { close(); leavePlay('home'); });
+    back.appendChild(h('div', { class: 'modal', role: 'alertdialog', 'aria-modal': 'true', 'aria-label': '離開比賽' },
+      h('h2', { text: '離開比賽？' }),
+      h('p', { class: 'muted', text: isSpec ? '離開後會回到首頁，比賽仍會繼續。' : '離開後會回到首頁，目前的分數會保留在排名中，比賽仍會繼續。' }),
+      h('div', { class: 'actions' }, stay, quit)));
+    back.addEventListener('keydown', function (ev) { if (ev.key === 'Escape') { ev.preventDefault(); close(); } });
+    back.addEventListener('pointerdown', function (ev) { if (ev.target === back) close(); });
+    $('#modalRoot').appendChild(back);
+    stay.focus();
+  }
 
   /* ---------- 暫停、結算 ---------- */
   function closeOverlay() { var ov = $('#overlay'); ov.hidden = true; ov.textContent = ''; ov.style.background = ''; lastCount = 0; }

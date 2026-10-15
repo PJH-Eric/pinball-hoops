@@ -194,9 +194,8 @@ ul, ol { padding: 0; list-style: none; }
 @media (hover: none) { .hints-on #ctl .keycaps { display: none; } }
 #stage { cursor: pointer; touch-action: none; }
 #stage.is-down #cv { box-shadow: 0 0 0 3px #05070f, 0 0 34px rgba(255,122,26,.7); }
-#app[data-spectator="1"] #ctl, #app[data-spectator="1"] .pause-btn { display: none; }
+#app[data-spectator="1"] #ctl { display: none; }
 #app[data-spectator="1"] #stage { cursor: default; }
-#app[data-online="1"] .pause-btn { display: none; }
 
 .spec-tabs { position: absolute; left: 0; right: 0; bottom: 4px; display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; pointer-events: none; }
 .spec-tabs button { pointer-events: auto; min-height: 36px; padding: 2px 12px; border-radius: 999px; border: 2px solid var(--line); background: rgba(10,15,32,.85); color: var(--muted); font-weight: 800; cursor: pointer; }
