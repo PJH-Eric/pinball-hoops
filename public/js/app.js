@@ -562,6 +562,8 @@
   });
 
   /* 線上不能暫停（其他人還在打），但可以隨時離開：先確認，比賽不會因此中斷 */
+  function closeLeaveConfirm() { var m = document.getElementById('leaveModal'); if (m) m.remove(); }
+
   function confirmLeaveOnline() {
     if (document.getElementById('leaveModal')) return;
     var isSpec = play.mode === 'spec';
@@ -614,7 +616,7 @@
   function leavePlay(to) {
     if (play && play.mode !== 'solo' && to === 'home') { Net.send({ type: 'leave' }); online.room = null; online.joined = false; }
     play = null;
-    closeOverlay();
+    closeOverlay(); closeLeaveConfirm();
     if (to === 'home') Net.disconnect();
     go(to);
   }
@@ -881,7 +883,7 @@
     showNotice('房間已結束', reasons[m.reason] || '房間已關閉', '回到大廳');
   });
   Net.on('kicked', function () {
-    online.room = null; online.joined = false; play = null; closeOverlay();
+    online.room = null; online.joined = false; play = null; closeOverlay(); closeLeaveConfirm();
     go('lobby'); showNotice('你被請出房間', '房主把你請出了房間。', '回到大廳');
   });
   Net.on('error', function (m) {
