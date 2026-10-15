@@ -337,7 +337,7 @@
 
   function idleView() {
     var geo = Rules.geometry(play.diff);
-    return { diff: play.diff, ball: null, fl: [Rules.REST], hx: geo.hoop.cx, score: 0, combo: 0, ballNo: 0, t: 0 };
+    return { diff: play.diff, ball: null, fl: [Rules.REST], hx: geo.hoop.x, hy: geo.hoop.cy, score: 0, combo: 0, ballNo: 0, t: 0 };
   }
 
   var lastCount = 0;
@@ -380,8 +380,8 @@
           sfx(e.swish ? 'swish' : 'score');
           if (e.combo > 1) sfx('combo');
           rend.flash(); rend.shake(8);
-          rend.spark(g.hoopX, geo.hoop.y + 10, '#ffe14d', 22);
-          rend.pop(g.hoopX, geo.hoop.y + 56, '+' + e.points + (e.swish ? ' 空心' : ''), e.swish ? '#22e4ff' : '#ffe14d');
+          rend.spark(g.hoopX, g.hoopY + 10, '#ffe14d', 22);
+          rend.pop(Math.min(g.hoopX, 470), g.hoopY + 56, '+' + e.points + (e.swish ? ' 空心' : ''), e.swish ? '#22e4ff' : '#ffe14d');
           vibrate(e.swish ? [30, 40, 30] : 30);
           onlineReportSoon();
           break;
@@ -425,7 +425,7 @@
     if (online.room && online.room.specs.length && now - p.lastSnap > 100) {
       p.lastSnap = now;
       var b = g.ball;
-      Net.send({ type: 'snap', b: b ? [b.x, b.y, b.spin] : null, f: [g.fl[0].a], h: g.hoopX });
+      Net.send({ type: 'snap', b: b ? [b.x, b.y, b.spin] : null, f: [g.fl[0].a], h: g.hoopY });
     }
   }
 
@@ -437,15 +437,15 @@
     var s = p.snaps[p.focus];
     if (!s) return null;
     var d = p.disp;
-    if (!d || d.id !== p.focus) d = p.disp = { id: p.focus, x: 0, y: 0, hx: 300, f0: Rules.REST, init: false, ball: null, spin: 0 };
+    if (!d || d.id !== p.focus) d = p.disp = { id: p.focus, x: 0, y: 0, hy: 260, f0: Rules.REST, init: false, ball: null, spin: 0 };
     var k = Math.min(1, dt * 18);
     if (s.b) {
       if (!d.ball || !d.init) { d.x = s.b[0]; d.y = s.b[1]; d.init = true; }
       d.x += (s.b[0] - d.x) * k; d.y += (s.b[1] - d.y) * k; d.spin = s.b[2];
       d.ball = true;
     } else d.ball = false;
-    d.hx += (s.h - d.hx) * k; d.f0 += (s.f[0] - d.f0) * k;
-    return { diff: room.difficulty, ball: d.ball ? { x: d.x, y: d.y, spin: d.spin } : null, fl: [d.f0], hx: d.hx, score: s.s, combo: s.c, ballNo: 0, t: 0 };
+    d.hy += (s.h - d.hy) * k; d.f0 += (s.f[0] - d.f0) * k;
+    return { diff: room.difficulty, ball: d.ball ? { x: d.x, y: d.y, spin: d.spin } : null, fl: [d.f0], hx: Rules.geometry(room.difficulty).hoop.x, hy: d.hy, score: s.s, combo: s.c, ballNo: 0, t: 0 };
   }
 
   function buildSpecTabs() {

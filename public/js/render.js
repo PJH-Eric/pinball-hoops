@@ -69,15 +69,15 @@
       g.fillStyle = 'rgba(0,0,0,0.12)';
       for (i = 0; i < 240; i++) g.fillRect(rnd() * W, rnd() * H, 3, 2);
 
-      /* 球場漆線：三分線、罰球區、中圈 */
+      /* 球場漆線：籃框在右牆，三分線與禁區以右牆為中心 */
       g.lineWidth = 4;
       g.strokeStyle = 'rgba(255,122,26,0.34)';
-      g.beginPath(); g.arc(W / 2, 40, 360, 0.18 * Math.PI, 0.82 * Math.PI); g.stroke();
+      g.beginPath(); g.arc(W, 260, 400, 0.62 * Math.PI, 1.38 * Math.PI); g.stroke();
       g.strokeStyle = 'rgba(34,228,255,0.22)';
-      g.strokeRect(W / 2 - 120, 0, 240, 250);
-      g.beginPath(); g.arc(W / 2, 250, 96, 0, Math.PI); g.stroke();
+      g.strokeRect(W - 250, 150, 250, 220);
+      g.beginPath(); g.arc(W - 250, 260, 90, 0.5 * Math.PI, 1.5 * Math.PI); g.stroke();
       g.strokeStyle = 'rgba(255,122,26,0.22)';
-      g.beginPath(); g.arc(W / 2, 640, 120, 0, Math.PI * 2); g.stroke();
+      g.beginPath(); g.arc(300, 640, 120, 0, Math.PI * 2); g.stroke();
       g.beginPath(); g.moveTo(0, 640); g.lineTo(W, 640); g.stroke();
 
       /* 場地字樣 */
@@ -201,46 +201,43 @@
       g.restore();
     }
 
-    function drawHoopBack(g, geo, hx) {
-      var w = geo.hoop.w, y = geo.hoop.y;
-      /* 籃板 */
+    /* 籃框貼在右牆、開口朝左：籃板在最右，框往左伸，球網往下垂 */
+    function drawHoopBack(g, geo, hx, hy) {
+      var w = geo.hoop.w, hw = w / 2;
       g.save();
-      g.fillStyle = 'rgba(244,247,255,0.10)';
-      g.strokeStyle = 'rgba(244,247,255,0.85)'; g.lineWidth = 3;
-      var bw = w + 56, bh = 74;
-      g.beginPath(); g.rect(hx - bw / 2, y - bh - 6, bw, bh); g.fill(); g.stroke();
-      g.strokeStyle = 'rgba(255,122,26,0.9)'; g.lineWidth = 3;
-      g.strokeRect(hx - w * 0.3, y - 36, w * 0.6, 28);
+      g.fillStyle = 'rgba(244,247,255,0.14)';
+      g.strokeStyle = 'rgba(244,247,255,0.9)'; g.lineWidth = 3;
+      g.beginPath(); g.rect(W - 14, hy - 86, 12, 120); g.fill(); g.stroke();
+      g.strokeStyle = 'rgba(255,122,26,0.95)';
+      g.strokeRect(W - 13, hy - 46, 10, 40);
       g.restore();
-      /* 球網（跟著籃框移動輕輕擺） */
       var sw = r.netSway;
       g.save();
       g.strokeStyle = 'rgba(244,247,255,0.7)'; g.lineWidth = 1.6;
-      var hw = w / 2, depth = 46, n = 7;
+      var depth = 46, n = 6;
       for (var i = 0; i <= n; i++) {
         var u = i / n;
-        var x0 = hx - hw + u * w, x1 = hx - hw * 0.62 + u * w * 0.62 + sw * 0.5;
-        g.beginPath(); g.moveTo(x0, y); g.lineTo(x1, y + depth); g.stroke();
+        var x0 = hx - hw + u * w, x1 = hx - hw * 0.6 + u * w * 0.6 + sw * 0.5;
+        g.beginPath(); g.moveTo(x0, hy); g.lineTo(x1, hy + depth); g.stroke();
       }
       for (var j = 1; j <= 3; j++) {
-        var v = j / 3.4, yy = y + depth * v;
-        var l0 = hx - hw + (hw * 0.38) * v + sw * 0.5 * v, r0 = hx + hw - (hw * 0.38) * v + sw * 0.5 * v;
-        g.beginPath(); g.moveTo(l0, yy); g.lineTo(r0, yy); g.stroke();
+        var v = j / 3.4, yy = hy + depth * v;
+        g.beginPath(); g.moveTo(hx - hw + hw * 0.4 * v + sw * 0.5 * v, yy); g.lineTo(hx + hw - hw * 0.4 * v + sw * 0.5 * v, yy); g.stroke();
       }
       g.restore();
     }
 
-    function drawHoopFront(g, geo, hx, glow, opts) {
-      var w = geo.hoop.w, y = geo.hoop.y;
+    function drawHoopFront(g, geo, hx, hy, glow, opts) {
+      var w = geo.hoop.w;
       g.save();
       if (glow > 0) { g.shadowColor = C.yellow; g.shadowBlur = 40 * glow; }
       g.lineCap = 'round';
       g.strokeStyle = C.orange; g.lineWidth = opts.contrast ? 8 : 6;
-      g.beginPath(); g.moveTo(hx - w / 2, y); g.lineTo(hx + w / 2, y); g.stroke();
+      g.beginPath(); g.moveTo(hx - w / 2, hy); g.lineTo(hx + w / 2, hy); g.stroke();
       g.shadowBlur = 0;
       g.fillStyle = '#ffd9b0';
-      g.beginPath(); g.arc(hx - w / 2, y, 6, 0, Math.PI * 2); g.fill();
-      g.beginPath(); g.arc(hx + w / 2, y, 6, 0, Math.PI * 2); g.fill();
+      g.beginPath(); g.arc(hx - w / 2, hy, 6, 0, Math.PI * 2); g.fill();
+      g.beginPath(); g.arc(hx + w / 2, hy, 6, 0, Math.PI * 2); g.fill();
       g.restore();
     }
 
@@ -268,12 +265,12 @@
       g.setTransform(k, 0, 0, k, sx * k, sy * k);
 
       /* 籃框移動量 → 球網擺動 */
-      var hx = view.hx;
-      r.netSway += ((hx - r.lastHx) * 2.4 - r.netSway) * 0.2;
-      r.lastHx = hx;
+      var hx = view.hx, hy = view.hy;
+      r.netSway += ((hy - r.lastHx) * -0.6 - r.netSway) * 0.2;
+      r.lastHx = hy;
       if (r.glow > 0) r.glow = Math.max(0, r.glow - dt * 2.2);
 
-      drawHoopBack(g, geo, hx);
+      drawHoopBack(g, geo, hx, hy);
 
       geo.bumpers.forEach(function (b, i) {
         drawBumper(g, b, i, (opts.bumperFlash && opts.bumperFlash[i]) || 0, opts);
@@ -298,7 +295,7 @@
         r.trail.length = 0;
       }
 
-      drawHoopFront(g, geo, hx, r.glow, opts);
+      drawHoopFront(g, geo, hx, hy, r.glow, opts);
 
       /* 粒子與分數彈出 */
       if (!opts.reduceMotion) {

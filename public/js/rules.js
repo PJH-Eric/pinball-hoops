@@ -1,7 +1,7 @@
 /* ===== rules.js — 彈珠籃球的規則與物理核心（瀏覽器與伺服器共用，不碰 DOM）=====
  *
  * 一張固定大小的彈珠台（600×900，y 向下），一顆籃球、單一彈板（點畫面任何地方就揮板）、幾個彈跳墊、
- * 一個左右移動的籃框。球從上方穿過籃框 ＝ 得分（沒碰框的空心球 30 分，碰框進 20 分，
+ * 一個貼右牆、開口朝左、上下移動的籃框。球從上方穿過籃框 ＝ 得分（沒碰框的空心球 30 分，碰框進 20 分，
  * 連續進球有連擊倍率，最高 ×5；撞彈跳墊每下 1 分）。限時衝分。
  *
  * 全部使用固定步長（1/240 秒）與種子亂數，所以「同種子＋同操作」結果完全一致，
@@ -29,22 +29,22 @@
   var DIFFS = {
     kids: {
       id: 'kids', name: '幼幼班', blurb: '籃框超大、不會漏球，慢慢玩',
-      duration: 120, balls: 0, gravity: 0.62, hoopW: 150, hoopAmp: 60, hoopFreq: 0.08,
+      duration: 120, balls: 0, gravity: 0.85, hoopW: 100, hoopAmp: 0, hoopFreq: 0.08,
       flipLen: 300, pivotX: 500, drainOpen: false, bumpers: 2
     },
     easy: {
       id: 'easy', name: '簡單', blurb: '籃框大、動得慢，有 5 顆球',
-      duration: 90, balls: 5, gravity: 0.85, hoopW: 108, hoopAmp: 110, hoopFreq: 0.10,
+      duration: 90, balls: 5, gravity: 0.85, hoopW: 68, hoopAmp: 40, hoopFreq: 0.10,
       flipLen: 270, pivotX: 500, drainOpen: true, bumpers: 3
     },
     normal: {
       id: 'normal', name: '普通', blurb: '標準籃框，3 顆球',
-      duration: 90, balls: 3, gravity: 1.0, hoopW: 80, hoopAmp: 150, hoopFreq: 0.16,
+      duration: 90, balls: 3, gravity: 1.0, hoopW: 58, hoopAmp: 70, hoopFreq: 0.16,
       flipLen: 250, pivotX: 500, drainOpen: true, bumpers: 3
     },
     hard: {
       id: 'hard', name: '困難', blurb: '籃框小又快，漏球空隙大',
-      duration: 90, balls: 3, gravity: 1.12, hoopW: 60, hoopAmp: 195, hoopFreq: 0.26,
+      duration: 90, balls: 3, gravity: 1.12, hoopW: 50, hoopAmp: 100, hoopFreq: 0.26,
       flipLen: 225, pivotX: 500, drainOpen: true, bumpers: 5
     }
   };
@@ -61,9 +61,9 @@
       /* 外牆：左牆一路到底（球從這邊漏掉），右邊是順著滑向彈板的斜坡 */
       { ax: 0, ay: 150, bx: 0, by: 960, e: 0.45 },
       { ax: 0, ay: 150, bx: 150, by: 0, e: 0.45 },
-      { ax: 150, ay: 0, bx: 450, by: 0, e: 0.45 },
-      { ax: 450, ay: 0, bx: W, by: 150, e: 0.45 },
-      { ax: W, ay: 150, bx: W, by: 600, e: 0.45 },
+      { ax: 150, ay: 0, bx: W - 50, by: 0, e: 0.35 },
+      { ax: W - 50, ay: 0, bx: W, by: 50, e: 0.3 },
+      { ax: W, ay: 50, bx: W, by: 600, e: 0.22 },
       { ax: W, ay: 600, bx: px + 4, by: PIVOT_Y - 6, e: 0.3 }
     ];
     var bumpers;
@@ -78,7 +78,8 @@
       pivots: [{ x: px, y: PIVOT_Y }],
       flipDir: -1,                   /* 樞軸在右、尖端朝左 */
       flipLen: d.flipLen,
-      hoop: { y: 190, w: d.hoopW, cx: W / 2, amp: d.hoopAmp, freq: d.hoopFreq },
+      /* 籃框固定在右牆上、開口朝左：籃板貼右牆，框從牆邊往左伸出；只會慢慢上下移動 */
+      hoop: { w: d.hoopW, x: W - d.hoopW / 2, cy: 260, amp: d.hoopAmp, freq: d.hoopFreq },
       padY: 888                      /* 幼幼班的彈力墊（不漏球） */
     };
     geoCache[diffId] = geo;
@@ -90,8 +91,9 @@
     return { x: p.x + geo.flipDir * Math.cos(a) * geo.flipLen, y: p.y + Math.sin(a) * geo.flipLen };
   }
 
-  function hoopXAt(geo, t) {
-    return geo.hoop.cx + geo.hoop.amp * Math.sin(2 * Math.PI * geo.hoop.freq * t);
+  function hoopXAt(geo) { return geo.hoop.x; }
+  function hoopYAt(geo, t) {
+    return geo.hoop.cy + geo.hoop.amp * Math.sin(2 * Math.PI * geo.hoop.freq * t);
   }
 
   function create(diffId, seed) {
@@ -105,7 +107,7 @@
       ball: null,
       fl: [{ a: REST, w: 0 }],
       prevFlip: false,
-      hoopX: hoopXAt(geo, 0),
+      hoopX: hoopXAt(geo), hoopY: hoopYAt(geo, 0),
       bumperFlash: geo.bumpers.map(function () { return 0; }),
       bumperCd: geo.bumpers.map(function () { return 0; }),
       stuckT: 0,
@@ -183,7 +185,8 @@
   function step(g, inp) {
     var geo = g.geo, d = g.diff, dt = STEP;
     g.t += dt;
-    g.hoopX = hoopXAt(geo, g.t);
+    g.hoopX = geo.hoop.x;
+    g.hoopY = hoopYAt(geo, g.t);
     var k;
     for (k = 0; k < g.bumperFlash.length; k++) {
       if (g.bumperFlash[k] > 0) g.bumperFlash[k] -= dt;
@@ -267,17 +270,15 @@
 
     /* 籃框的兩根框柱 */
     var hw = geo.hoop.w / 2;
-    for (n = -1; n <= 1; n += 2) {
-      h = hitCircle(b, g.hoopX + n * hw, geo.hoop.y, 6, 0.5);
-      if (h) {
-        b.rim = true;
-        if (h.impact > 90) g.events.push({ type: 'rim', power: Math.min(1, h.impact / 700) });
-      }
+    h = hitCircle(b, g.hoopX - hw, g.hoopY, 6, 0.5);      /* 前緣框柱；後面就是右牆（籃板） */
+    if (h) {
+      b.rim = true;
+      if (h.impact > 90) g.events.push({ type: 'rim', power: Math.min(1, h.impact / 700) });
     }
 
     /* 進球判定：球心由上往下穿過框線，且在兩根框柱之間 */
-    if (b.armed && prevY < geo.hoop.y && b.y >= geo.hoop.y && b.vy > 0 &&
-        Math.abs(b.x - g.hoopX) < hw - 3) {
+    if (b.armed && prevY < g.hoopY && b.y >= g.hoopY && b.vy > 0 &&
+        b.x > g.hoopX - hw + 4 && b.x < W) {
       var swish = !b.rim;
       g.combo = (g.t - g.lastScoreT <= COMBO_WINDOW) ? Math.min(COMBO_MAX, g.combo + 1) : 1;
       if (g.combo > g.bestCombo) g.bestCombo = g.combo;
@@ -292,8 +293,8 @@
       b.vx *= 0.5;
       g.events.push({ type: 'score', points: pts, swish: swish, combo: g.combo });
     }
-    if (!b.armed && b.y < geo.hoop.y - 90) b.armed = true;
-    if (b.y > geo.hoop.y + 130) b.rim = false;
+    if (!b.armed && b.y < g.hoopY - 90) b.armed = true;
+    if (b.y > g.hoopY + 130) b.rim = false;
 
     /* 安全網：卡住或飛出界外 */
     if (b.x < -40 || b.x > W + 40 || b.y < -60) { b.x = W / 2; b.y = 300; b.vx = 0; b.vy = 0; }
@@ -359,7 +360,7 @@
       diff: g.diff.id,
       ball: g.ball ? { x: g.ball.x, y: g.ball.y, spin: g.ball.spin } : null,
       fl: [g.fl[0].a],
-      hx: g.hoopX,
+      hx: g.hoopX, hy: g.hoopY,
       score: g.score, combo: g.combo, ballNo: g.ballNo, t: g.t
     };
   }
@@ -368,7 +369,7 @@
     W: W, H: H, STEP: STEP, BALL_R: BALL_R, REST: REST, ACTIVE: ACTIVE, FLIP_R: FLIP_R,
     COMBO_WINDOW: COMBO_WINDOW, COMBO_MAX: COMBO_MAX,
     DIFFS: DIFFS, DIFF_LIST: DIFF_LIST,
-    geometry: geometry, flipperTip: flipperTip, hoopXAt: hoopXAt,
+    geometry: geometry, flipperTip: flipperTip, hoopXAt: hoopXAt, hoopYAt: hoopYAt,
     create: create, update: update, step: step, timeLeft: timeLeft,
     summary: summary, view: view
   };

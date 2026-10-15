@@ -17,8 +17,9 @@ t('四段難度都存在且參數單調變難', () => {
   assert.deepStrictEqual(Rules.DIFF_LIST, ['kids', 'easy', 'normal', 'hard']);
   for (let i = 1; i < L.length; i++) {
     assert(L[i].hoopW < L[i - 1].hoopW, '籃框要越來越小');
-    assert(L[i].hoopFreq > L[i - 1].hoopFreq, '籃框要越來越快');
-    assert(L[i].gravity > L[i - 1].gravity, '重力要越來越大');
+    assert(L[i].hoopFreq >= L[i - 1].hoopFreq, '籃框要越來越快');
+    assert(L[i].hoopAmp >= L[i - 1].hoopAmp, '籃框上下移動要越來越大');
+    assert(L[i].gravity >= L[i - 1].gravity, '重力不能變小');
   }
   assert.strictEqual(Rules.DIFFS.kids.drainOpen, false, '幼幼班不會漏球');
   assert(Rules.DIFFS.hard.bumpers > Rules.DIFFS.normal.bumpers);
@@ -57,13 +58,13 @@ t('機器人能得到分數（球真的可以進框）', () => {
 });
 t('穿過籃框才算進球，從下往上不算', () => {
   const g = Rules.create('easy', 1);
-  const hy = g.geo.hoop.y;
+  const hy = g.hoopY;
   g.ball.x = g.hoopX; g.ball.y = hy + 30; g.ball.vx = 0; g.ball.vy = -900;
   for (let i = 0; i < 40; i++) Rules.step(g, {});     /* 球已由下往上穿過框線、還在上升 */
   assert(g.ball.y < hy - 10, '測試前提：球要已經穿到框上方');
   assert.strictEqual(g.hoops, 0, '往上穿過不該得分');
   const h = Rules.create('easy', 1);
-  h.ball.x = h.hoopX; h.ball.y = hy - 40; h.ball.vx = 0; h.ball.vy = 200;
+  h.ball.x = h.hoopX; h.ball.y = h.hoopY - 40; h.ball.vx = 0; h.ball.vy = 200;
   for (let i = 0; i < 240; i++) Rules.step(h, {});
   assert.strictEqual(h.hoops, 1, '由上往下穿過要得分');
   assert.strictEqual(h.swishes, 1, '沒碰框是空心球');
@@ -71,10 +72,9 @@ t('穿過籃框才算進球，從下往上不算', () => {
 });
 t('連擊倍率：7 秒內連進，倍率遞增，最高 ×5', () => {
   const g = Rules.create('kids', 1);
-  const hy = g.geo.hoop.y;
   const scores = [];
   for (let n = 0; n < 6; n++) {
-    g.ball.x = g.hoopX; g.ball.y = hy - 30; g.ball.vx = 0; g.ball.vy = 200; g.ball.armed = true; g.ball.rim = false;
+    g.ball.x = g.hoopX; g.ball.y = Rules.hoopYAt(g.geo, g.t + 0.02) - 30; g.ball.vx = 0; g.ball.vy = 200; g.ball.armed = true; g.ball.rim = false;
     const before = g.score;
     for (let i = 0; i < 120; i++) Rules.step(g, {});
     scores.push(g.score - before - 0);
@@ -84,8 +84,7 @@ t('連擊倍率：7 秒內連進，倍率遞增，最高 ×5', () => {
 });
 t('超過連擊時間，倍率重算', () => {
   const g = Rules.create('kids', 1);
-  const hy = g.geo.hoop.y;
-  function shot() { g.ball.x = Rules.hoopXAt(g.geo, g.t + 0.02); g.ball.y = hy - 30; g.ball.vx = 0; g.ball.vy = 200; g.ball.armed = true; for (let i = 0; i < 120; i++) Rules.step(g, {}); }
+  function shot() { g.ball.x = g.hoopX; g.ball.y = Rules.hoopYAt(g.geo, g.t + 0.02) - 30; g.ball.vx = 0; g.ball.vy = 200; g.ball.armed = true; for (let i = 0; i < 120; i++) Rules.step(g, {}); }
   shot(); shot();
   assert.strictEqual(g.combo, 2);
   g.t += Rules.COMBO_WINDOW + 1;
@@ -115,20 +114,22 @@ t('彈板能把球往上打（不是穿過），打在中段力道夠到籃框�
   }
   assert(minY < 300, '球應被打到半空以上，實際最高 y=' + minY);
 });
-t('時機對的話，彈板打出的球能進籃框', () => {
-  let hoops = 0;
-  for (const bx of [340, 380, 420]) for (const wait of [0.15, 0.3]) {
-    const g = Rules.create('normal', 1);
-    g.ball.x = bx; g.ball.y = 740; g.ball.vx = 0; g.ball.vy = 0;
-    let t0 = null;
-    for (let i = 0; i < 240 * 5 && g.ball; i++) {
-      if (g.ball.y > 770 && t0 === null) t0 = g.t;
-      Rules.step(g, { flip: t0 !== null && g.t - t0 >= wait && g.t - t0 < wait + 0.35 });
-      g.events.length = 0;
+t('時機對的話，彈板打出的球能進籃框（各難度都有可行的時機）', () => {
+  Rules.DIFF_LIST.forEach(id => {
+    let ok = 0;
+    for (let bx = 310; bx <= 430; bx += 15) for (let wait = 0; wait <= 0.6; wait += 0.05) {
+      const g = Rules.create(id, 1);
+      g.ball.x = bx; g.ball.y = 740; g.ball.vx = 0; g.ball.vy = 0;
+      let t0 = null;
+      for (let i = 0; i < 240 * 6 && g.ball && g.hoops === 0; i++) {
+        if (g.ball.y > 770 && t0 === null) t0 = g.t;
+        Rules.step(g, { flip: t0 !== null && g.t - t0 >= wait && g.t - t0 < wait + 0.35 });
+        g.events.length = 0;
+      }
+      if (g.hoops) ok++;
     }
-    hoops += g.hoops;
-  }
-  assert(hoops >= 2, '6 種時機至少要有 2 種進球，實際 ' + hoops);
+    assert(ok >= 4, id + ' 可進球的時機太少：' + ok);
+  });
 });
 t('球不會穿牆出界', () => {
   for (let s = 1; s <= 6; s++) {
@@ -142,13 +143,14 @@ t('球不會穿牆出界', () => {
     assert(!escaped, '種子 ' + s + ' 球飛出界外');
   }
 });
-t('籃框位置落在牆內（最大偏移也不碰牆）', () => {
+t('籃框貼右牆、開口朝左，上下移動不碰到彈跳墊以外的牆', () => {
   Rules.DIFF_LIST.forEach(id => {
     const geo = Rules.geometry(id);
-    const hw = geo.hoop.w / 2;
-    assert(geo.hoop.cx - geo.hoop.amp - hw > 20, id + ' 左邊超出');
-    assert(geo.hoop.cx + geo.hoop.amp + hw < Rules.W - 20, id + ' 右邊超出');
+    assert(Math.abs(geo.hoop.x + geo.hoop.w / 2 - Rules.W) < 1e-6, id + ' 籃框右緣要貼牆');
+    assert(geo.hoop.w >= Rules.BALL_R * 2 + 12 + 2, id + ' 開口至少要容得下一顆球');
+    assert(geo.hoop.cy - geo.hoop.amp > 120 && geo.hoop.cy + geo.hoop.amp < 520, id + ' 上下移動超出範圍');
   });
+  assert(Rules.geometry('kids').hoop.w <= 100, '洞不能太大');
 });
 t('彈板尖端與左牆之間的缺口比球大、且彈板越難越短', () => {
   let prev = 1e9;
