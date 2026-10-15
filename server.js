@@ -175,6 +175,17 @@ function handle(person, msg) {
 
 setInterval(() => { hub.tick(); flush(); }, 250).unref();
 
+/* 心跳：網路直接斷掉（斷網、關機、休眠）時 TCP 不會通知 close，
+ * 定期 ping，太久沒收到任何 frame 的連線就當作斷線，人數才會減少。 */
+const PING_MS = 10000, DEAD_MS = 30000;
+setInterval(() => {
+  const t = Date.now();
+  for (const it of Array.from(people.values())) {
+    if (t - it.socket.lastSeen > DEAD_MS) { it.socket.close(); try { it.socket.raw.destroy(); } catch (e) { /* 忽略 */ } }
+    else it.socket.ping();
+  }
+}, PING_MS).unref();
+
 setInterval(() => {
   for (const room of hub.rooms.values()) {
     if (room.phase !== 'playing') continue;
@@ -232,6 +243,12 @@ ws.attach(server, {
     const q = new URL(req.url || '/ws', 'http://x').searchParams;
     const key = String(q.get('key') || '').slice(0, 40);
 
+    /* 重新整理：舊連線可能還沒被偵測到斷開，同一個 key 的舊連線先斷掉，才不會算成兩個人 */
+    if (key) {
+      for (const it of Array.from(people.values())) {
+        if (it.person.key === key) { it.socket.close(); try { it.socket.raw.destroy(); } catch (e) { /* 忽略 */ } }
+      }
+    }
     const ghost = key && byKey.get(key);
     if (ghost && ghost.person) {
       person = ghost.person;
