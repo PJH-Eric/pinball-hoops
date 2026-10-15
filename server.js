@@ -191,7 +191,7 @@ setInterval(() => {
 function counts() {
   let players = 0, spectators = 0;
   for (const room of hub.rooms.values()) {
-    players += hub.livePlayers(room).length;
+    players += hub.livePlayers(room).filter(m => !m.cpu).length;
     spectators += hub.specs(room).length;
   }
   let lobby = 0;
