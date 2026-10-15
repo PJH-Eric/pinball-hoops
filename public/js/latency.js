@@ -135,6 +135,7 @@
   }
 
   function placeAt(x, y) {
+    meter.style.right = '';
     meter.style.left = Math.round(x) + 'px';
     meter.style.top = Math.round(y) + 'px';
   }
@@ -165,7 +166,7 @@
     if (meter.parentElement !== document.body) document.body.appendChild(meter);
     if (!anchor) {
       meter.classList.remove('is-docked', 'is-compact');
-      meter.style.left = meter.style.top = meter.style.zIndex = '';
+      meter.style.left = meter.style.top = meter.style.right = meter.style.zIndex = '';
       return;
     }
     const level = stackLevel(anchor.el);
@@ -175,7 +176,10 @@
       meter.classList.remove('is-compact');
       meter.style.zIndex = level === null ? '' : String(level);
       meter.dataset.spot = 'left';
-      placeAt(r.left - GAP - meter.offsetWidth, r.top + (r.height - meter.offsetHeight) / 2);
+      // 以右緣貼著設定鈕：數字變寬（-- → 123）時往左長，不會壓到設定鈕
+      meter.style.left = 'auto';
+      meter.style.right = Math.round(window.innerWidth - r.left + GAP) + 'px';
+      meter.style.top = Math.round(r.top + (r.height - meter.offsetHeight) / 2) + 'px';
       return;
     }
     meter.classList.add('is-docked');
