@@ -1,0 +1,18 @@
+{
+  "name": "pinball-hoops",
+  "version": "0.1.0",
+  "description": "彈珠籃球 - 彈珠台＋籃框投籃的限時衝分遊戲（四段難度、線上同台競分、觀戰；零依賴）",
+  "main": "server.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node tests/verify.js",
+    "test:online": "node scripts/online-check.js",
+    "verify": "node tests/verify.js && node scripts/online-check.js",
+    "inject": "node scripts/inject-server-url.js"
+  },
+  "engines": { "node": ">=18" },
+  "dependencies": {},
+  "license": "MIT",
+  "private": true
+}
