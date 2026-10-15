@@ -876,7 +876,7 @@
     var reasons = { 'no-players': '房間裡已經沒有玩家，房間已關閉', room_closed: '這個房間已經結束了', not_member: '你已經不在這個房間了' };
     online.room = null; online.joined = false;
     play = play && play.mode === 'solo' ? play : null;
-    closeOverlay(); closeSettings();
+    closeOverlay(); closeSettings(); closeLeaveConfirm();
     if (invite) { clearInvite(); }
     chatEl.hidden = true;
     go('lobby');
