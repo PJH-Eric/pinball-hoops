@@ -24,6 +24,12 @@
 
   function setState(s, info) {
     state = s;
+    var NL = root.NetworkLatency;
+    if (NL) {
+      if (s === 'open') { NL.setProbe(function () { send({ type: 'ping', t: Date.now() }); }); NL.setActive(true); }
+      else if (s === 'closed') NL.report(null);
+      else NL.setActive(false);
+    }
     stateHandlers.forEach(function (fn) { fn(s, info); });
   }
 
@@ -71,6 +77,7 @@
       if (msg.type === 'pong') {
         rtt = Date.now() - msg.t;
         offset = msg.now + rtt / 2 - Date.now();
+        if (root.NetworkLatency) root.NetworkLatency.report(rtt);
         return;
       }
       if (msg.type === 'room' && msg.room && msg.room.serverNow && !rtt) offset = msg.room.serverNow - Date.now();
