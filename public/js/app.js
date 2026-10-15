@@ -249,7 +249,7 @@
   var play = null;            /* 目前這局的狀態 */
   var raf = 0, lastTs = 0;
 
-  var oppW = 0;
+  var oppW = 0, oppGap = 0;
   function layout() {
     var wrap = $('#cvWrap');
     if (!wrap) return;
@@ -260,7 +260,9 @@
     if (n) {
       /* 對手視窗：靠右一欄，寬度不超過整體 26%，高度要塞得下 n 個 */
       oppW = Math.max(48, Math.min(Math.floor(w * 0.26), 190, Math.floor((hgt - 4 - (n - 1) * 8 - n * 20) / n * 2 / 3)));
-      w -= oppW + 10;
+      oppGap = w >= 700 ? 28 : 16;
+      $('#oppCol').style.marginLeft = oppGap + 'px';
+      w -= oppW + oppGap;
     }
     var cw = Math.floor(Math.min(w - 4, (hgt - 4) * 2 / 3));
     var ch = Math.floor(cw * 1.5);
