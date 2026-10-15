@@ -64,11 +64,21 @@ t('穿過籃框才算進球，從下往上不算', () => {
   assert(g.ball.y < hy - 10, '測試前提：球要已經穿到框上方');
   assert.strictEqual(g.hoops, 0, '往上穿過不該得分');
   const h = Rules.create('easy', 1);
-  h.ball.x = h.hoopX; h.ball.y = h.hoopY - 40; h.ball.vx = 0; h.ball.vy = 200;
+  h.ball.x = h.hoopX; h.ball.y = h.hoopY - 40; h.ball.vx = 0; h.ball.vy = 200; h.ball.armed = true;
   for (let i = 0; i < 240; i++) Rules.step(h, {});
   assert.strictEqual(h.hoops, 1, '由上往下穿過要得分');
   assert.strictEqual(h.swishes, 1, '沒碰框是空心球');
   assert.strictEqual(h.score - h.bumps, 30, '空心球 30 分（彈跳墊另外每下 1 分）');
+});
+t('新球發出時不能因為籃框掃過而直接進球', () => {
+  for (const id of ['easy', 'normal', 'hard']) {
+    for (let s = 1; s <= 20; s++) {
+      const g = Rules.create(id, s * 17);
+      g.ball.vx = 0; g.ball.vy = 0; g.ball.x = g.hoopX - 10; g.ball.y = 300;   /* 球停在框的移動範圍內，等框掃過 */
+      for (let i = 0; i < 120; i++) { Rules.step(g, {}); if (g.hoops) break; }
+      assert.strictEqual(g.hoops, 0, id + ' 新球被框掃過就得分');
+    }
+  }
 });
 t('連擊倍率：7 秒內連進，倍率遞增，最高 ×5', () => {
   const g = Rules.create('kids', 1);

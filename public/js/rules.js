@@ -139,7 +139,8 @@
     g.ballNo++;
     g.ball = {
       x: 455 + r1 * 90, y: 300, vx: -(70 + r2 * 150), vy: 0,
-      r: BALL_R, rim: false, armed: true, fromBelow: false, spin: 0
+      /* 發球點落在籃框上下移動的範圍內，框掃過球不能算進球：新球要先飛到框線上方才開始計分（armed） */
+      r: BALL_R, rim: false, armed: false, fromBelow: false, spin: 0
     };
     g.stuckT = 0;
     g.events.push({ type: 'serve' });
