@@ -178,10 +178,11 @@ setInterval(() => { hub.tick(); flush(); }, 250).unref();
 setInterval(() => {
   for (const room of hub.rooms.values()) {
     if (room.phase !== 'playing') continue;
-    const sp = hub.specs(room);
-    if (!sp.length) continue;
+    /* 玩家也要看到對手的畫面，所以同房間所有真人連線都收 */
+    const viewers = Array.from(room.members.values()).filter(m => m.connected && !m.cpu);
+    if (!viewers.length) continue;
     const snaps = hub.snapsOf(room);
-    for (const s of sp) send(s.id, { type: 'snaps', s: snaps, t: Date.now() });
+    for (const v of viewers) send(v.id, { type: 'snaps', s: snaps, t: Date.now() });
   }
 }, 100).unref();
 

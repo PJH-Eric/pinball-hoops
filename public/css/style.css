@@ -197,6 +197,14 @@ ul, ol { padding: 0; list-style: none; }
 #app[data-spectator="1"] #ctl { display: none; }
 #app[data-spectator="1"] #stage { cursor: default; }
 
+/* 對戰時的對手視窗：靠主畫面右側一欄，只看不能操作 */
+.opp-col { flex: 0 0 auto; display: flex; flex-direction: column; justify-content: center; gap: 8px; margin-left: 10px; pointer-events: none; }
+.opp-col:empty { display: none; }
+.opp { display: flex; flex-direction: column; gap: 3px; }
+.opp canvas { display: block; border-radius: 8px; box-shadow: 0 0 0 2px #05070f, 0 0 12px rgba(34,228,255,.2); opacity: .95; }
+.opp-tag { display: flex; justify-content: space-between; align-items: baseline; gap: 6px; font-size: 13px; font-weight: 800; color: var(--muted); line-height: 1.1; min-width: 0; }
+.opp-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.opp-score { font-size: 17px; text-shadow: 0 0 8px rgba(255,225,77,.5); color: var(--yellow); font-style: italic; font-variant-numeric: tabular-nums; }
 .spec-tabs { position: absolute; left: 0; right: 0; bottom: 4px; display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; pointer-events: none; }
 .spec-tabs button { pointer-events: auto; min-height: 36px; padding: 2px 12px; border-radius: 999px; border: 2px solid var(--line); background: rgba(10,15,32,.85); color: var(--muted); font-weight: 800; cursor: pointer; }
 .spec-tabs button[aria-selected="true"] { color: var(--white); border-color: var(--orange); }

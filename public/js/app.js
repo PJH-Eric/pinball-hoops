@@ -249,14 +249,27 @@
   var play = null;            /* 目前這局的狀態 */
   var raf = 0, lastTs = 0;
 
+  var oppW = 0;
   function layout() {
     var wrap = $('#cvWrap');
     if (!wrap) return;
     var w = wrap.clientWidth, hgt = wrap.clientHeight;
     if (w < 40 || hgt < 40) return;
+    var n = play && play.mode === 'online' ? Object.keys(play.opps).length : 0;
+    oppW = 0;
+    if (n) {
+      /* 對手視窗：靠右一欄，寬度不超過整體 26%，高度要塞得下 n 個 */
+      oppW = Math.max(48, Math.min(Math.floor(w * 0.26), 190, Math.floor((hgt - 4 - (n - 1) * 8 - n * 20) / n * 2 / 3)));
+      w -= oppW + 10;
+    }
     var cw = Math.floor(Math.min(w - 4, (hgt - 4) * 2 / 3));
     var ch = Math.floor(cw * 1.5);
     rend.resize(cw, ch, Math.min(window.devicePixelRatio || 1, 2.5));
+    Object.keys(play && play.opps || {}).forEach(function (id) {
+      var o = play.opps[id];
+      o.rend.resize(oppW, Math.round(oppW * 1.5), Math.min(window.devicePixelRatio || 1, 2));
+      o.el.style.width = oppW + 'px';
+    });
   }
   window.addEventListener('resize', function () { layout(); applyPanelMode(); });
   window.addEventListener('orientationchange', function () { setTimeout(function () { layout(); applyPanelMode(); }, 200); });
@@ -274,14 +287,16 @@
       g: o.mode === 'spec' ? null : Rules.create(o.diff, o.seed, o.mode === 'online'),
       startAt: o.startAt || 0, cd: 3.2, cdShown: 0, running: false, paused: false, over: false,
       lastReport: 0, lastSnap: 0, lastScore: -1, resultShown: false, newBest: false,
-      focus: null, disp: null, snaps: {}
+      focus: null, disp: null, snaps: {}, opps: {}, oppKey: ''
     };
+    $('#oppCol').textContent = '';
     app.dataset.online = online ? '1' : '0';
     app.dataset.solo = online ? '0' : '1';
     app.dataset.spectator = o.mode === 'spec' ? '1' : '0';
     $('#btnPause').textContent = o.mode === 'solo' ? '暫停' : '離開';
     if (o.mode === 'spec') { play.running = true; buildSpecTabs(); }
     go('play');
+    if (o.mode === 'online') buildOpps();
     applyPanelMode(true);
     updateHud(true);
     updateSummary();
@@ -333,6 +348,7 @@
 
     opts.bumperFlash = g.bumperFlash;
     rend.draw(Rules.view(g), opts);
+    if (p.mode === 'online') drawOpps(dt);
     updateHud();
   }
 
@@ -423,7 +439,7 @@
       p.lastReport = now;
       Net.send({ type: 'score', score: g.score, hoops: g.hoops, combo: g.combo, ballNo: g.ballNo, done: !!done });
     }
-    if (online.room && online.room.specs.length && now - p.lastSnap > 100) {
+    if (online.room && now - p.lastSnap > 100) {
       p.lastSnap = now;
       var b = g.ball;
       Net.send({ type: 'snap', b: b ? [b.x, b.y, b.spin] : null, f: [g.fl[0].a], h: g.hoopY });
@@ -439,6 +455,11 @@
     if (!s) return null;
     var d = p.disp;
     if (!d || d.id !== p.focus) d = p.disp = { id: p.focus, x: 0, y: 0, hy: 260, f0: Rules.REST, init: false, ball: null, spin: 0 };
+    return smoothView(d, s, dt, room);
+  }
+
+  /** 把收到的快照（10 次/秒）平滑成每幀的畫面；觀戰與對手視窗共用 */
+  function smoothView(d, s, dt, room) {
     var k = Math.min(1, dt * 18);
     if (s.b) {
       if (!d.ball || !d.init) { d.x = s.b[0]; d.y = s.b[1]; d.init = true; }
@@ -447,6 +468,38 @@
     } else d.ball = false;
     d.hy += (s.h - d.hy) * k; d.f0 += (s.f[0] - d.f0) * k;
     return { diff: room.difficulty, ball: d.ball ? { x: d.x, y: d.y, spin: d.spin } : null, fl: [d.f0], hx: Rules.geometry(room.difficulty).hoop.x, hy: d.hy, score: s.s, combo: s.c, ballNo: 0, t: 0 };
+  }
+
+  /* ---------- 對戰時看到對手的畫面（仿 rainbow-bubble 的對手欄） ---------- */
+  function buildOpps() {
+    var p = play, room = online.room, box = $('#oppCol');
+    if (!p || p.mode !== 'online' || !room) return;
+    var others = room.players.filter(function (x) { return x.id !== room.you.id; });
+    var key = others.map(function (x) { return x.id; }).join('|');
+    if (key === p.oppKey) return;
+    p.oppKey = key;
+    box.textContent = '';
+    p.opps = {};
+    others.forEach(function (pl) {
+      var c = h('canvas', { 'aria-label': pl.name + ' 的畫面' });
+      var nameEl = h('span', { class: 'opp-name', text: pl.name });
+      var scoreEl = h('b', { class: 'opp-score', text: '0' });
+      var el = h('div', { class: 'opp' }, h('div', { class: 'opp-tag' }, nameEl, scoreEl), c);
+      box.appendChild(el);
+      p.opps[pl.id] = { el: el, rend: Render.create(c), scoreEl: scoreEl, disp: { id: pl.id, x: 0, y: 0, hy: 260, f0: Rules.REST, init: false, ball: null, spin: 0 }, score: -1 };
+    });
+    layout();
+  }
+
+  function drawOpps(dt) {
+    var p = play, room = online.room;
+    if (!room) return;
+    Object.keys(p.opps).forEach(function (id) {
+      var o = p.opps[id], s = p.snaps[id];
+      var view = s ? smoothView(o.disp, s, dt, room) : { diff: room.difficulty, ball: null, fl: [Rules.REST], hx: Rules.geometry(room.difficulty).hoop.x, hy: Rules.geometry(room.difficulty).hoop.cy, score: 0, combo: 0, ballNo: 0, t: 0 };
+      if (s && o.score !== s.s) { o.score = s.s; o.scoreEl.textContent = String(s.s); }
+      o.rend.draw(view, { reduceMotion: true, contrast: false, pressed: [view.fl[0] < Rules.REST - 0.2] });
+    });
   }
 
   function buildSpecTabs() {
@@ -461,7 +514,7 @@
   }
 
   Net.on('snaps', function (m) {
-    if (!play || play.mode !== 'spec') return;
+    if (!play || play.mode === 'solo') return;
     play.snaps = m.s || {};
   });
 
@@ -616,6 +669,7 @@
   function leavePlay(to) {
     if (play && play.mode !== 'solo' && to === 'home') { Net.send({ type: 'leave' }); online.room = null; online.joined = false; }
     play = null;
+    $('#oppCol').textContent = '';
     closeOverlay(); closeLeaveConfirm();
     if (to === 'home') Net.disconnect();
     go(to);
@@ -860,7 +914,7 @@
       } else if (r.phase === 'lobby') { renderResult(); }
     }
     if (screen === 'room') renderRoom();
-    if (screen === 'play') { updateSummary(); if (play && play.mode === 'spec') buildSpecTabs(); }
+    if (screen === 'play') { updateSummary(); if (play && play.mode === 'spec') buildSpecTabs(); if (play && play.mode === 'online') buildOpps(); }
   });
 
   function ensureOnlinePlay(r) {
