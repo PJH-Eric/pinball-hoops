@@ -709,9 +709,13 @@
       dlg.appendChild(btns);
       dlg.appendChild(h('p', { class: 'note', text: '單機模式沒有房間，所以「回到房間」不能使用' }));
     } else {
-      var room = online.room, ended = room && room.phase === 'ended';
+      var room = online.room, phase = room && room.phase;
+      /* 有人先按「再來一局」房間就回到等待狀態：還停在結算的人也要能按「再來一局」（＝準備），不能卡在「結算中」 */
+      var ended = phase === 'ended' || phase === 'lobby';
+      if (phase === 'ended' && room.result) p.lastResult = room.result;
       dlg.appendChild(h('h2', { text: ended ? '比賽結束' : '結算中…' }));
-      var list = ended && room.result ? room.result.map(function (r) { return { id: r.id, name: r.name, score: r.score, place: r.place }; })
+      var final = phase === 'ended' ? room.result : (phase === 'lobby' ? p.lastResult : null);
+      var list = final ? final.map(function (r) { return { id: r.id, name: r.name, score: r.score, place: r.place }; })
         : (room ? room.players.slice().sort(function (a, b) { return b.score - a.score; }).map(function (x, i) { return { id: x.id, name: x.name, score: x.score, place: i + 1 }; }) : []);
       var ol = h('ol', { class: 'rank' });
       list.forEach(function (r) {
@@ -725,6 +729,7 @@
       dlg.appendChild(btns);
       if (!ended) dlg.appendChild(h('p', { class: 'note', text: '等其他玩家打完，結束後才能再來一局' }));
       else if (!isPlayer) dlg.appendChild(h('p', { class: 'note', text: '觀戰者不能開新局' }));
+      else if (phase === 'lobby') dlg.appendChild(h('p', { class: 'note', text: '房間已回到等待狀態，按「再來一局」表示準備好了' }));
     }
     ov.appendChild(dlg);
     var f = $('.dialog button:not([aria-disabled])', ov); if (f && document.activeElement && document.activeElement.tagName !== 'INPUT') f.focus();
