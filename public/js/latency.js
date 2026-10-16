@@ -178,7 +178,11 @@
       meter.dataset.spot = 'left';
       // 以右緣貼著設定鈕：數字變寬（-- → 123）時往左長，不會壓到設定鈕
       meter.style.left = 'auto';
-      meter.style.right = Math.round(window.innerWidth - r.left + GAP) + 'px';
+      // 語言切換鈕在設定鈕左邊時，徽章再往左讓一格
+      const lt = document.getElementById('b-lang');
+      let edge = r.left;
+      if (lt && isShown(lt)) edge = Math.min(edge, lt.getBoundingClientRect().left);
+      meter.style.right = Math.round(window.innerWidth - edge + GAP) + 'px';
       meter.style.top = Math.round(r.top + (r.height - meter.offsetHeight) / 2) + 'px';
       return;
     }
@@ -216,8 +220,10 @@
     const quality = ms === null ? 'unknown' : ms <= 30 ? 'good' : ms < 100 ? 'warn' : 'bad';
     el.classList.add('is-' + quality);
     el.querySelector('.latency-meter__value').textContent = ms === null ? '--' : String(ms);
-    el.setAttribute('aria-label', ms === null ? '連線延遲，等待回應' : '連線延遲 ' + ms + ' 毫秒');
-    el.title = ms === null ? '連線延遲：等待回應' : '連線延遲：' + ms + ' ms';
+    const I = root.I18N;
+    const tr = function (k, p, fb) { return I ? I.t(k, p, fb) : fb; };
+    el.setAttribute('aria-label', ms === null ? tr('latency.wait', null, '連線延遲，等待回應') : tr('latency.aria', { ms: ms }, '連線延遲 ' + ms + ' 毫秒'));
+    el.title = ms === null ? tr('latency.titleWait', null, '連線延遲：等待回應') : tr('latency.title', { ms: ms }, '連線延遲：' + ms + ' ms');
     dock();
   }
 
@@ -277,6 +283,7 @@
   }
 
   root.addEventListener('resize', function () { dock(true); });
+  if (root.I18N) root.I18N.onChange(function () { if (meter) render(); });
 
   root.NetworkLatency = { setActive, setProbe, report, bindSocketIo };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', ensureMeter, { once: true });

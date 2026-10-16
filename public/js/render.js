@@ -86,7 +86,10 @@
       g.font = '900 64px "Noto Sans TC","Microsoft JhengHei",system-ui,sans-serif';
       g.textAlign = 'center'; g.textBaseline = 'middle';
       g.fillStyle = 'rgba(255,225,77,0.10)';
-      g.fillText('彈珠籃球', 0, 0);
+      var brand = (root.I18N ? root.I18N.t('brand.name') : '彈珠籃球');
+      var bw = g.measureText(brand).width;
+      if (bw > 480) g.font = '900 ' + Math.floor(64 * 480 / bw) + 'px "Noto Sans TC","Microsoft JhengHei",system-ui,sans-serif';
+      g.fillText(brand, 0, 0);
       g.restore();
 
       /* 漏球口（彈板尖端左邊）的警示斜紋；幼幼班改成彈力墊 */

@@ -4,6 +4,24 @@
 
   var Rules = window.Rules, Store = window.Store, Audio = window.GameAudio;
   var Render = window.Render, Net = window.Net, Config = window.Config;
+  var I18N = window.I18N;
+  function T(k, p) { return I18N.t(k, p); }
+
+  /* 伺服器內建的隨機暱稱與電腦名稱（順序要和 lib/rooms.js 的 ADJ / ANI 一致），顯示時才翻譯 */
+  var ADJ = ['快速', '安靜', '閃亮', '勇敢', '圓圓', '跳跳', '神準', '穩穩', '火熱', '冰涼'];
+  var ANI = ['小貓', '企鵝', '柴犬', '貓頭鷹', '海豹', '小熊', '狐狸', '河馬', '浣熊', '鴨鴨'];
+  function pname(name) {
+    name = String(name == null ? '' : name);
+    if (I18N.lang === 'zh-Hant' || !name) return name;
+    var m = /^電腦·(.+?)(\d*)$/.exec(name);
+    if (m) { var ai = ANI.indexOf(m[1]); if (ai >= 0) return T('cpu.prefix') + T('ani.' + ai) + m[2]; }
+    for (var a = 0; a < ADJ.length; a++) {
+      if (name.indexOf(ADJ[a]) === 0) { var bi = ANI.indexOf(name.slice(ADJ[a].length)); if (bi >= 0) return T('adj.' + a) + T('ani.' + bi); }
+    }
+    return name;
+  }
+  function dn(id) { return T('diff.' + id + '.name'); }
+  var SKILL_ID = { '新手': 'easy', '一般': 'normal', '高手': 'hard' };
 
   /* ---------- 小工具 ---------- */
   function $(s, root) { return (root || document).querySelector(s); }
@@ -91,8 +109,8 @@
 
   function renderBest() {
     var b = Store.get('best') || {};
-    var parts = Rules.DIFF_LIST.filter(function (d) { return b[d]; }).map(function (d) { return Rules.DIFFS[d].name + ' ' + b[d]; });
-    $('#bestLine').textContent = parts.length ? '本機最高分：' + parts.join('　') : '還沒有紀錄，來挑戰看看！';
+    var parts = Rules.DIFF_LIST.filter(function (d) { return b[d]; }).map(function (d) { return dn(d) + ' ' + b[d]; });
+    $('#bestLine').textContent = parts.length ? T('home.best', { list: parts.join(T('sep.best')) }) : T('home.noBest');
   }
 
   /* ---------- 單機：選難度 ---------- */
@@ -104,8 +122,8 @@
     Rules.DIFF_LIST.forEach(function (id) {
       var d = Rules.DIFFS[id];
       var btn = h('button', { class: 'diff', type: 'button', role: 'radio', 'aria-checked': String(id === soloDiff), 'data-diff': id },
-        h('b', { text: d.name }), h('span', { text: d.blurb }),
-        h('em', { text: best[id] ? '最高分 ' + best[id] : '尚未挑戰' }));
+        h('b', { text: dn(id) }), h('span', { text: T('diff.' + id + '.blurb') }),
+        h('em', { text: best[id] ? T('diff.best', { n: best[id] }) : T('diff.none') }));
       btn.addEventListener('click', function () { soloDiff = id; renderSoloDiffs(); sfx('ui'); });
       box.appendChild(btn);
     });
@@ -118,7 +136,8 @@
   var modalOpener = null;
   $('#btnSettings').addEventListener('click', function (e) { openSettings(e.currentTarget); });
 
-  function sw(label, key, onChange) {
+  function sw(labelKey, key, onChange) {
+    var label = T(labelKey);
     var btn = h('button', { class: 'sw', type: 'button', role: 'switch', 'aria-checked': String(!!Store.get(key)), 'aria-label': label }, h('i'));
     btn.addEventListener('click', function () {
       var on = btn.getAttribute('aria-checked') !== 'true';
@@ -129,14 +148,15 @@
     return h('div', { class: 'row' }, h('span', { text: label }), btn);
   }
 
-  function meter(label, key) {
-    var box = h('div', { class: 'meter', role: 'group', 'aria-label': label + '音量' });
+  function meter(volKey, key) {
+    var label = T(volKey);
+    var box = h('div', { class: 'meter', role: 'group', 'aria-label': label });
     function paint() {
       $$('button', box).forEach(function (b, i) { b.classList.toggle('on', i < Store.get(key)); });
     }
     for (var i = 1; i <= 5; i++) {
       (function (n) {
-        var b = h('button', { type: 'button', 'aria-label': label + '音量 ' + n });
+        var b = h('button', { type: 'button', 'aria-label': T(volKey + 'N', { n: n }) });
         b.addEventListener('click', function () {
           Store.set(key, Store.get(key) === n ? n - 1 : n);
           applySettings(); paint(); sfx('bump');
@@ -145,7 +165,7 @@
       })(i);
     }
     paint();
-    return h('div', { class: 'row' }, h('span', { text: label + '音量' }), box);
+    return h('div', { class: 'row' }, h('span', { text: label }), box);
   }
 
   function openSettings(opener) {
@@ -156,20 +176,20 @@
 
     var back = h('div', { class: 'modal-back', id: 'settingsModal' });
     var dlg = h('div', { class: 'modal', role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'setTitle' });
-    dlg.appendChild(h('h2', { id: 'setTitle', text: '設定' }));
-    dlg.appendChild(sw('背景音樂', 'musicOn'));
-    dlg.appendChild(meter('音樂', 'musicLevel'));
-    dlg.appendChild(sw('音效', 'sfxOn', function (on) { if (on) sfx('bump'); }));
-    dlg.appendChild(meter('音效', 'sfxLevel'));
-    dlg.appendChild(sw('震動', 'vibrate', function (on) { if (on) vibrate(30); }));
-    dlg.appendChild(sw('減少動態（關閉拖尾、粒子、震動）', 'reduceMotion'));
-    dlg.appendChild(sw('高對比（加粗輪廓）', 'contrast'));
-    dlg.appendChild(sw('顯示鍵盤提示', 'showHints'));
+    dlg.appendChild(h('h2', { id: 'setTitle', text: T('set.title') }));
+    dlg.appendChild(sw('set.music', 'musicOn'));
+    dlg.appendChild(meter('set.musicVol', 'musicLevel'));
+    dlg.appendChild(sw('set.sfx', 'sfxOn', function (on) { if (on) sfx('bump'); }));
+    dlg.appendChild(meter('set.sfxVol', 'sfxLevel'));
+    dlg.appendChild(sw('set.vibrate', 'vibrate', function (on) { if (on) vibrate(30); }));
+    dlg.appendChild(sw('set.reduce', 'reduceMotion'));
+    dlg.appendChild(sw('set.contrast', 'contrast'));
+    dlg.appendChild(sw('set.hints', 'showHints'));
 
     var btns = h('div', { class: 'actions' });
-    var reset = h('button', { class: 'btn small ghost', type: 'button', text: '恢復預設' });
-    reset.addEventListener('click', function () { Store.reset(); applySettings(); closeSettings(); openSettings(modalOpener); toast('已恢復預設'); });
-    var close = h('button', { class: 'btn small primary', type: 'button', text: '關閉' });
+    var reset = h('button', { class: 'btn small ghost', type: 'button', text: T('set.reset') });
+    reset.addEventListener('click', function () { Store.reset(); applySettings(); closeSettings(); openSettings(modalOpener); toast(T('toast.reset')); });
+    var close = h('button', { class: 'btn small primary', type: 'button', text: T('set.close') });
     close.addEventListener('click', closeSettings);
     btns.appendChild(reset); btns.appendChild(close);
     dlg.appendChild(btns);
@@ -295,13 +315,18 @@
     app.dataset.online = online ? '1' : '0';
     app.dataset.solo = online ? '0' : '1';
     app.dataset.spectator = o.mode === 'spec' ? '1' : '0';
-    $('#btnPause').textContent = o.mode === 'solo' ? '暫停' : '離開';
+    pauseLabel();
     if (o.mode === 'spec') { play.running = true; buildSpecTabs(); }
     go('play');
     if (o.mode === 'online') buildOpps();
     applyPanelMode(true);
     updateHud(true);
     updateSummary();
+  }
+
+  function pauseLabel() {
+    if (!play) return;
+    $('#btnPause').textContent = play.mode === 'solo' ? T('play.pause') : T('common.leave');
   }
 
   function frame(ts) {
@@ -376,7 +401,7 @@
     lastCount = 0;
     closeOverlay();
     sfx('go');
-    if (!play.mode || play.mode !== 'spec') { rend.pop(300, 420, '開球！', '#ffe14d'); }
+    if (!play.mode || play.mode !== 'spec') { rend.pop(300, 420, T('pop.start'), '#ffe14d'); }
   }
 
   function handleEvents(g) {
@@ -400,13 +425,13 @@
           if (e.combo > 1) sfx('combo');
           rend.flash(); rend.shake(8);
           rend.spark(g.hoopX, g.hoopY + 10, '#ffe14d', 22);
-          rend.pop(Math.min(g.hoopX, 470), g.hoopY + 56, '+' + e.points + (e.swish ? ' 空心' : ''), e.swish ? '#22e4ff' : '#ffe14d');
+          rend.pop(Math.min(g.hoopX, 470), g.hoopY + 56, '+' + e.points + (e.swish ? T('pop.swish') : ''), e.swish ? '#22e4ff' : '#ffe14d');
           vibrate(e.swish ? [30, 40, 30] : 30);
           onlineReportSoon();
           break;
         case 'drain':
           sfx('drain'); vibrate(80);
-          rend.pop(300, 800, !g.unlimited && g.diff.balls > 0 && g.ballNo >= g.diff.balls ? '球用完了' : '漏球！', '#ff3d9a');
+          rend.pop(300, 800, !g.unlimited && g.diff.balls > 0 && g.ballNo >= g.diff.balls ? T('pop.ballsOut') : T('pop.drain'), '#ff3d9a');
           onlineReportSoon();
           break;
       }
@@ -483,12 +508,12 @@
     box.textContent = '';
     p.opps = {};
     others.forEach(function (pl) {
-      var c = h('canvas', { 'aria-label': pl.name + ' 的畫面' });
-      var nameEl = h('span', { class: 'opp-name', text: pl.name });
+      var c = h('canvas', { 'aria-label': T('play.oppOf', { name: pname(pl.name) }) });
+      var nameEl = h('span', { class: 'opp-name', text: pname(pl.name) });
       var scoreEl = h('b', { class: 'opp-score', text: '0' });
       var el = h('div', { class: 'opp' }, h('div', { class: 'opp-tag' }, nameEl, scoreEl), c);
       box.appendChild(el);
-      p.opps[pl.id] = { el: el, rend: Render.create(c), scoreEl: scoreEl, disp: { id: pl.id, x: 0, y: 0, hy: 260, f0: Rules.REST, init: false, ball: null, spin: 0 }, score: -1 };
+      p.opps[pl.id] = { el: el, canvas: c, plName: pl.name, nameEl: nameEl, rend: Render.create(c), scoreEl: scoreEl, disp: { id: pl.id, x: 0, y: 0, hy: 260, f0: Rules.REST, init: false, ball: null, spin: 0 }, score: -1 };
     });
     layout();
   }
@@ -509,7 +534,7 @@
     box.textContent = '';
     if (!play || play.mode !== 'spec' || !online.room) return;
     online.room.players.forEach(function (pl) {
-      var b = h('button', { type: 'button', role: 'tab', 'aria-selected': String(play.focus === pl.id), text: pl.name });
+      var b = h('button', { type: 'button', role: 'tab', 'aria-selected': String(play.focus === pl.id), text: pname(pl.name) });
       b.addEventListener('click', function () { play.focus = pl.id; play.disp = null; buildSpecTabs(); sfx('ui'); });
       box.appendChild(b);
     });
@@ -574,24 +599,24 @@
     box.className = 'sum';
     if (play.mode === 'solo') {
       var g = play.g, best = (Store.get('best') || {})[g.diff.id] || 0;
-      box.appendChild(h('h4', { text: '單機 · ' + g.diff.name }));
-      [['本機最高', best], ['進球', g.hoops], ['空心球', g.swishes], ['最高連擊', '×' + g.bestCombo], ['彈跳墊', g.bumps]].forEach(function (r) {
+      box.appendChild(h('h4', { text: T('sum.solo', { diff: dn(g.diff.id) }) }));
+      [[T('sum.best'), best], [T('sum.hoops'), g.hoops], [T('sum.swishes'), g.swishes], [T('sum.bestCombo'), '×' + g.bestCombo], [T('sum.bumps'), g.bumps]].forEach(function (r) {
         box.appendChild(h('div', { class: 'kv' }, h('span', { text: r[0] }), h('b', { text: String(r[1]) })));
       });
-      box.appendChild(h('p', { class: 'muted', text: '點畫面任何地方揮板　Esc 暫停' }));
+      box.appendChild(h('p', { class: 'muted', text: T('sum.hint') }));
       return;
     }
     var room = online.room;
     if (!room) return;
-    box.appendChild(h('h4', { text: '房間 ' + room.id + ' · ' + Rules.DIFFS[room.difficulty].name }));
+    box.appendChild(h('h4', { text: T('sum.room', { id: room.id, diff: dn(room.difficulty) }) }));
     var ol = h('ol', { class: 'rank' });
     room.players.slice().sort(function (a, b) { return b.score - a.score; }).forEach(function (pl, i) {
       ol.appendChild(h('li', { class: pl.id === room.you.id ? 'me' : '' },
-        h('span', { class: 'no', text: String(i + 1) }), h('span', { text: pl.name + (pl.connected ? '' : '（離線）') }), h('span', { class: 'sc', text: String(pl.score) })));
+        h('span', { class: 'no', text: String(i + 1) }), h('span', { text: pname(pl.name) + (pl.connected ? '' : T('sum.offline')) }), h('span', { class: 'sc', text: String(pl.score) })));
     });
     box.appendChild(ol);
-    if (room.specs.length) box.appendChild(h('p', { class: 'muted', text: '觀戰 ' + room.specs.length + ' 人' }));
-    if (room.you.role === 'spec') box.appendChild(h('p', { class: 'muted', text: '你是觀戰者' }));
+    if (room.specs.length) box.appendChild(h('p', { class: 'muted', text: T('sum.specs', { n: room.specs.length }) }));
+    if (room.you.role === 'spec') box.appendChild(h('p', { class: 'muted', text: T('sum.youSpec') }));
   }
 
   /* 資訊欄：寬版固定在左、窄版從左側滑出 */
@@ -624,13 +649,13 @@
     var isSpec = play.mode === 'spec';
     var back = h('div', { class: 'modal-back', id: 'leaveModal' });
     function close() { back.remove(); }
-    var stay = h('button', { class: 'btn primary', type: 'button', text: '繼續比賽' });
-    var quit = h('button', { class: 'btn ghost', type: 'button', text: '離開' });
+    var stay = h('button', { class: 'btn primary', type: 'button', text: T('leave.stay') });
+    var quit = h('button', { class: 'btn ghost', type: 'button', text: T('common.leave') });
     stay.addEventListener('click', close);
     quit.addEventListener('click', function () { close(); leavePlay('home'); });
-    back.appendChild(h('div', { class: 'modal', role: 'alertdialog', 'aria-modal': 'true', 'aria-label': '離開比賽' },
-      h('h2', { text: '離開比賽？' }),
-      h('p', { class: 'muted', text: isSpec ? '離開後會回到首頁，比賽仍會繼續。' : '離開後會回到首頁，目前的分數會保留在排名中，比賽仍會繼續。' }),
+    back.appendChild(h('div', { class: 'modal', role: 'alertdialog', 'aria-modal': 'true', 'aria-label': T('leave.aria') },
+      h('h2', { text: T('leave.title') }),
+      h('p', { class: 'muted', text: isSpec ? T('leave.bodySpec') : T('leave.bodyPlayer') }),
       h('div', { class: 'actions' }, stay, quit)));
     back.addEventListener('keydown', function (ev) { if (ev.key === 'Escape') { ev.preventDefault(); close(); } });
     back.addEventListener('pointerdown', function (ev) { if (ev.target === back) close(); });
@@ -645,16 +670,20 @@
     if (!play || play.mode !== 'solo') return;
     play.paused = on;
     if (on) {
-      var ov = $('#overlay');
-      ov.hidden = false; ov.textContent = ''; ov.style.background = '';
-      ov.appendChild(h('div', { class: 'dialog', role: 'dialog', 'aria-label': '暫停' },
-        h('h2', { text: '暫停' }),
-        h('div', { class: 'dialog-btns' },
-          dlgBtn('繼續', 'primary', function () { pauseSolo(false); }),
-          dlgBtn('重新開始', '', function () { restartSolo(); }),
-          dlgBtn('回到首頁', 'ghost', function () { leavePlay('home'); }))));
-      var f = $('.dialog button', ov); if (f) f.focus();
+      renderPause();
+      var f = $('#overlay .dialog button'); if (f) f.focus();
     } else closeOverlay();
+  }
+
+  function renderPause() {
+    var ov = $('#overlay');
+    ov.hidden = false; ov.textContent = ''; ov.style.background = '';
+    ov.appendChild(h('div', { class: 'dialog', role: 'dialog', 'aria-label': T('pause.title') },
+      h('h2', { text: T('pause.title') }),
+      h('div', { class: 'dialog-btns' },
+        dlgBtn(T('pause.resume'), 'primary', function () { pauseSolo(false); }),
+        dlgBtn(T('pause.restart'), '', function () { restartSolo(); }),
+        dlgBtn(T('pause.home'), 'ghost', function () { leavePlay('home'); }))));
   }
 
   function dlgBtn(text, cls, fn, disabled) {
@@ -689,47 +718,47 @@
     if (!p || !p.resultShown) return;
     var ov = $('#overlay');
     ov.hidden = false; ov.textContent = ''; ov.style.background = '';
-    var dlg = h('div', { class: 'dialog', role: 'dialog', 'aria-modal': 'true', 'aria-label': '結算' });
+    var dlg = h('div', { class: 'dialog', role: 'dialog', 'aria-modal': 'true', 'aria-label': T('res.aria') });
     var btns = h('div', { class: 'dialog-btns' });
 
     if (p.mode === 'solo') {
       var g = p.g;
-      dlg.appendChild(h('h2', { text: g.overReason === 'time' ? '時間到！' : '球用完了' }));
+      dlg.appendChild(h('h2', { text: g.overReason === 'time' ? T('res.timeUp') : T('res.ballsOut') }));
       dlg.appendChild(h('div', { class: 'big-score', text: String(g.score) }));
-      if (p.newBest) dlg.appendChild(h('div', { class: 'newbest', text: '新紀錄！' }));
+      if (p.newBest) dlg.appendChild(h('div', { class: 'newbest', text: T('res.newBest') }));
       var st = Rules.summary(g);
       var stats = h('div', { class: 'stats' });
-      [['難度', g.diff.name], ['進球', st.hoops], ['空心球', st.swishes], ['最高連擊', '×' + st.bestCombo], ['彈跳墊', st.bumps], ['用時', st.seconds + ' 秒']].forEach(function (r) {
+      [[T('res.diff'), dn(g.diff.id)], [T('sum.hoops'), st.hoops], [T('sum.swishes'), st.swishes], [T('sum.bestCombo'), '×' + st.bestCombo], [T('sum.bumps'), st.bumps], [T('res.time'), T('res.seconds', { n: st.seconds })]].forEach(function (r) {
         stats.appendChild(h('div', {}, h('span', { text: r[0] }), h('b', { text: String(r[1]) })));
       });
       dlg.appendChild(stats);
-      btns.appendChild(dlgBtn('再來一局', 'primary', restartSolo));
-      btns.appendChild(dlgBtn('回到房間', '', null, true));
-      btns.appendChild(dlgBtn('回到首頁', 'ghost', function () { leavePlay('home'); }));
+      btns.appendChild(dlgBtn(T('res.again'), 'primary', restartSolo));
+      btns.appendChild(dlgBtn(T('res.toRoom'), '', null, true));
+      btns.appendChild(dlgBtn(T('res.home'), 'ghost', function () { leavePlay('home'); }));
       dlg.appendChild(btns);
-      dlg.appendChild(h('p', { class: 'note', text: '單機模式沒有房間，所以「回到房間」不能使用' }));
+      dlg.appendChild(h('p', { class: 'note', text: T('res.soloNote') }));
     } else {
       var room = online.room, phase = room && room.phase;
       /* 有人先按「再來一局」房間就回到等待狀態：還停在結算的人也要能按「再來一局」（＝準備），不能卡在「結算中」 */
       var ended = phase === 'ended' || phase === 'lobby';
       if (phase === 'ended' && room.result) p.lastResult = room.result;
-      dlg.appendChild(h('h2', { text: ended ? '比賽結束' : '結算中…' }));
+      dlg.appendChild(h('h2', { text: ended ? T('res.over') : T('res.pending') }));
       var final = phase === 'ended' ? room.result : (phase === 'lobby' ? p.lastResult : null);
       var list = final ? final.map(function (r) { return { id: r.id, name: r.name, score: r.score, place: r.place }; })
         : (room ? room.players.slice().sort(function (a, b) { return b.score - a.score; }).map(function (x, i) { return { id: x.id, name: x.name, score: x.score, place: i + 1 }; }) : []);
       var ol = h('ol', { class: 'rank' });
       list.forEach(function (r) {
-        ol.appendChild(h('li', { class: room && r.id === room.you.id ? 'me' : '' }, h('span', { class: 'no', text: String(r.place) }), h('span', { text: r.name }), h('span', { class: 'sc', text: String(r.score) })));
+        ol.appendChild(h('li', { class: room && r.id === room.you.id ? 'me' : '' }, h('span', { class: 'no', text: String(r.place) }), h('span', { text: pname(r.name) }), h('span', { class: 'sc', text: String(r.score) })));
       });
       dlg.appendChild(ol);
       var isPlayer = room && room.you.role === 'player';
-      btns.appendChild(dlgBtn('再來一局', 'primary', function () { Net.send({ type: 'again' }); leavePlayToRoom(); }, !(ended && isPlayer)));
-      btns.appendChild(dlgBtn('回到房間', '', function () { leavePlayToRoom(); }));
-      btns.appendChild(dlgBtn('回到首頁', 'ghost', function () { leavePlay('home'); }));
+      btns.appendChild(dlgBtn(T('res.again'), 'primary', function () { Net.send({ type: 'again' }); leavePlayToRoom(); }, !(ended && isPlayer)));
+      btns.appendChild(dlgBtn(T('res.toRoom'), '', function () { leavePlayToRoom(); }));
+      btns.appendChild(dlgBtn(T('res.home'), 'ghost', function () { leavePlay('home'); }));
       dlg.appendChild(btns);
-      if (!ended) dlg.appendChild(h('p', { class: 'note', text: '等其他玩家打完，結束後才能再來一局' }));
-      else if (!isPlayer) dlg.appendChild(h('p', { class: 'note', text: '觀戰者不能開新局' }));
-      else if (phase === 'lobby') dlg.appendChild(h('p', { class: 'note', text: '房間已回到等待狀態，按「再來一局」表示準備好了' }));
+      if (!ended) dlg.appendChild(h('p', { class: 'note', text: T('res.waitOthers') }));
+      else if (!isPlayer) dlg.appendChild(h('p', { class: 'note', text: T('res.specNoNew') }));
+      else if (phase === 'lobby') dlg.appendChild(h('p', { class: 'note', text: T('res.lobbyNote') }));
     }
     ov.appendChild(dlg);
     var f = $('.dialog button:not([aria-disabled])', ov); if (f && document.activeElement && document.activeElement.tagName !== 'INPUT') f.focus();
@@ -743,13 +772,17 @@
   }
 
   /* ---------- 聊天 ---------- */
-  var QUICK = ['加油！', '好球！', '空心！', '再來一局', 'GG'];
+  var QUICK = ['chat.q1', 'chat.q2', 'chat.q3', 'chat.q4', 'chat.q5'];
   var chatLog = $('#chatLog'), unread = 0;
-  QUICK.forEach(function (t) {
-    var b = h('button', { type: 'button', text: t });
-    b.addEventListener('click', function () { Net.send({ type: 'chat', text: t }); });
-    $('#quick').appendChild(b);
-  });
+  function buildQuick() {
+    var box = $('#quick'); box.textContent = '';
+    QUICK.forEach(function (k) {
+      var b = h('button', { type: 'button', text: T(k) });
+      b.addEventListener('click', function () { Net.send({ type: 'chat', text: T(k) }); });
+      box.appendChild(b);
+    });
+  }
+  buildQuick();
   $('#chatForm').addEventListener('submit', function (e) {
     e.preventDefault();
     var inp = $('#chatInput');
@@ -766,7 +799,7 @@
   function chatVisible() { return screen === 'room' || (screen === 'play' && panelOpen); }
   function clearUnread() { unread = 0; $('#unreadDot').hidden = true; $('#chatDot').hidden = true; }
   function addChat(m, silent) {
-    var li = h('li', { class: m.role === 'spec' ? 'spec' : '' }, h('b', { text: m.name + (m.role === 'spec' ? '（觀戰）' : '') + '：' }), document.createTextNode(m.text));
+    var li = h('li', { class: m.role === 'spec' ? 'spec' : '' }, h('b', { text: pname(m.name) + (m.role === 'spec' ? T('chat.spec') : '') + T('chat.colon') }), document.createTextNode(m.text));
     chatLog.appendChild(li);
     while (chatLog.children.length > 80) chatLog.removeChild(chatLog.firstChild);
     chatLog.scrollTop = chatLog.scrollHeight;
@@ -785,15 +818,17 @@
 
   function nick() { return ($('#nickInput').value || '').trim(); }
 
+  var lastNet = ['idle'];
   function netLabel(state, info) {
+    lastNet = [state, info];
     var el = $('#netState');
     var map = {
-      open: ['已連線', 'ok'], connecting: ['連線中…', 'warn'], closed: ['連線中斷，重試中…', 'bad'],
-      waking: ['喚醒伺服器中…（免費主機約需 30～60 秒）', 'warn'], idle: ['', ''],
-      unavailable: ['這個網頁沒有設定伺服器，只能玩單機', 'bad']
+      open: ['net.open', 'ok'], connecting: ['net.connecting', 'warn'], closed: ['net.closed', 'bad'],
+      waking: ['net.waking', 'warn'], idle: ['', ''],
+      unavailable: ['net.unavailable', 'bad']
     };
     var v = map[state] || ['', ''];
-    el.textContent = v[0]; el.className = 'net-state ' + v[1];
+    el.textContent = v[0] ? T(v[0]) : ''; el.className = 'net-state ' + v[1];
     var can = state === 'open';
     $('#btnCreate').disabled = !can;
     $$('#roomList .btn').forEach(function (b) { b.disabled = !can; });
@@ -803,7 +838,7 @@
   function enterLobby() {
     $('#nickInput').value = Store.get('nick') || '';
     renderCreateDiff();
-    if (!Config.serverUrl) { netLabel('unavailable'); if (Config.error) toast(Config.error, 5000); return; }
+    if (!Config.serverUrl) { netLabel('unavailable'); if (Config.error) toast(I18N.t('err.' + Config.errorCode, undefined, Config.error), 5000); return; }
     Net.connect();
     netLabel(Net.getState());
     if (Net.isOpen()) Net.send({ type: 'hello', name: nick() });
@@ -815,7 +850,7 @@
   function renderCreateDiff() {
     var box = $('#createDiff'); box.textContent = '';
     Rules.DIFF_LIST.forEach(function (id) {
-      var b = h('button', { type: 'button', role: 'radio', 'aria-checked': String(id === createDiff), text: Rules.DIFFS[id].name });
+      var b = h('button', { type: 'button', role: 'radio', 'aria-checked': String(id === createDiff), text: dn(id) });
       b.addEventListener('click', function () { createDiff = id; renderCreateDiff(); sfx('ui'); });
       box.appendChild(b);
     });
@@ -833,16 +868,18 @@
   });
 
   Net.on('lobby', function (m) { renderRooms(m.rooms || []); });
+  var lastRooms = [];
   function renderRooms(list) {
+    lastRooms = list;
     var ul = $('#roomList'); ul.textContent = '';
     $('#roomEmpty').hidden = list.length > 0;
     var can = Net.getState() === 'open';
     list.forEach(function (r) {
       var canPlay = r.phase === 'lobby' && r.players < r.seats;
       var li = h('li', {},
-        h('div', { class: 'info' }, h('b', { text: r.id }), h('small', { text: r.difficultyName + ' · ' + r.players + '/' + r.seats + ' 人' + (r.specs ? ' · 觀戰 ' + r.specs : '') + ' · ' + (r.phase === 'lobby' ? '等待中' : '對戰中') + ' · 房主 ' + r.host })));
-      if (canPlay) li.appendChild(joinBtn('加入', 'primary', r.id, 'play'));
-      li.appendChild(joinBtn('觀戰', '', r.id, 'watch'));
+        h('div', { class: 'info' }, h('b', { text: r.id }), h('small', { text: [dn(r.difficulty), T('rooms.people', { n: r.players, m: r.seats }), r.specs ? T('rooms.specs', { n: r.specs }) : null, r.phase === 'lobby' ? T('rooms.waiting') : T('rooms.playing'), T('rooms.host', { name: pname(r.host) })].filter(Boolean).join(' · ') })));
+      if (canPlay) li.appendChild(joinBtn(T('rooms.join'), 'primary', r.id, 'play'));
+      li.appendChild(joinBtn(T('rooms.watch'), '', r.id, 'watch'));
       ul.appendChild(li);
     });
   }
@@ -868,26 +905,28 @@
     var box = $('#inviteCard');
     if (!invite) { box.hidden = true; return; }
     box.hidden = false; box.textContent = '';
-    box.appendChild(h('h3', { text: '你被邀請了！' }));
-    box.appendChild(h('p', { text: '房間 ' + invite.room + '（' + (invite.want === 'watch' ? '觀戰' : '一起玩') + '邀請）。確認暱稱後按「加入」。' }));
-    var field = h('label', { class: 'field' }, h('span', { class: 'sr', text: '邀請用暱稱' }));
-    var inp = h('input', { type: 'text', maxlength: '12', placeholder: '輸入暱稱（可留白）', value: Store.get('nick') || '' });
+    box.appendChild(h('h3', { text: T('inv.title') }));
+    box.appendChild(h('p', { text: T('inv.body', { room: invite.room, kind: T(invite.want === 'watch' ? 'inv.kindWatch' : 'inv.kindPlay') }) }));
+    var field = h('label', { class: 'field' }, h('span', { class: 'sr', text: T('inv.nickLabel') }));
+    var prev = $('#inviteNick');
+    var inp = h('input', { id: 'inviteNick', type: 'text', maxlength: '12', placeholder: T('nick.ph'), value: prev ? prev.value : (Store.get('nick') || '') });
     field.appendChild(inp);
-    var go = h('button', { class: 'btn primary', type: 'button', text: '加入' });
+    var go = h('button', { class: 'btn primary', type: 'button', text: T('inv.join') });
     go.disabled = Net.getState() !== 'open';
     go.addEventListener('click', function () {
       Store.set('nick', inp.value.trim());
       $('#nickInput').value = inp.value.trim();
       Net.send({ type: 'join', roomId: invite.room, name: inp.value.trim(), token: invite.token, want: invite.want });
     });
-    var cancel = h('button', { class: 'btn small ghost', type: 'button', text: '先不要' });
+    var cancel = h('button', { class: 'btn small ghost', type: 'button', text: T('inv.skip') });
     cancel.addEventListener('click', function () { clearInvite(); });
     box.appendChild(field);
     box.appendChild(h('div', { class: 'actions' }, go, cancel));
   }
   Net.onState(function () { if (invite) renderInvite(); });
+  var inviteErr = null;
   function clearInvite() {
-    invite = null;
+    invite = null; inviteErr = null;
     try { history.replaceState(null, '', location.pathname); } catch (e) { /* 忽略 */ }
     renderInvite();
   }
@@ -897,12 +936,7 @@
   Net.on('joined', function (m) {
     online.joined = true; online.role = m.role;
     if (invite) clearInvite();
-    var notes = {
-      seats_full: '玩家席位已滿，你以觀戰者身分進房',
-      match_running: '比賽進行中，你以觀戰者身分進房',
-      resumed: '已重新連線'
-    };
-    if (m.notice && notes[m.notice]) toast(notes[m.notice], 3600);
+    if (m.notice && /^(seats_full|match_running|resumed)$/.test(m.notice)) toast(T('notice.' + m.notice), 3600);
     chatLog.textContent = '';
     if (!(play && play.mode !== 'solo' && play.roomId === m.roomId)) go('room');
   });
@@ -934,37 +968,49 @@
   }
 
   Net.on('closed', function (m) {
-    var reasons = { 'no-players': '房間裡已經沒有玩家，房間已關閉', room_closed: '這個房間已經結束了', not_member: '你已經不在這個房間了' };
     online.room = null; online.joined = false;
     play = play && play.mode === 'solo' ? play : null;
     closeOverlay(); closeSettings(); closeLeaveConfirm();
     if (invite) { clearInvite(); }
     chatEl.hidden = true;
     go('lobby');
-    showNotice('房間已結束', reasons[m.reason] || '房間已關閉', '回到大廳');
+    showNotice('closed.title', I18N.t('closed.' + m.reason, undefined, '') ? 'closed.' + m.reason : 'closed.default', 'closed.back');
   });
   Net.on('kicked', function () {
     online.room = null; online.joined = false; play = null; closeOverlay(); closeLeaveConfirm();
-    go('lobby'); showNotice('你被請出房間', '房主把你請出了房間。', '回到大廳');
+    go('lobby'); showNotice('kicked.title', 'kicked.body', 'closed.back');
   });
   Net.on('error', function (m) {
-    toast(m.text || '發生錯誤', 3800);
+    toast(errText(m), 3800);
     if (invite && /^invite_|room_closed/.test(m.code || '')) {
-      var card = $('#inviteCard');
-      card.hidden = false; card.textContent = '';
-      card.appendChild(h('h3', { text: '無法使用這個邀請' }));
-      card.appendChild(h('p', { text: m.text }));
-      var ok = h('button', { class: 'btn small', type: 'button', text: '知道了' });
-      ok.addEventListener('click', function () { clearInvite(); });
-      card.appendChild(h('div', { class: 'actions' }, ok));
+      inviteErr = m;
       invite = null;
+      renderInviteErr();
     }
   });
 
-  function showNotice(title, text, btn) {
+  function errText(m) {
+    var v = m.code ? I18N.t('err.' + m.code, undefined, '') : '';
+    return v || m.text || T('toast.error');
+  }
+  function renderInviteErr() {
+    if (!inviteErr) return;
+    var card = $('#inviteCard');
+    card.hidden = false; card.textContent = '';
+    card.appendChild(h('h3', { text: T('inv.badTitle') }));
+    card.appendChild(h('p', { text: errText(inviteErr) }));
+    var ok = h('button', { class: 'btn small', type: 'button', text: T('common.ok') });
+    ok.addEventListener('click', function () { clearInvite(); });
+    card.appendChild(h('div', { class: 'actions' }, ok));
+  }
+
+  var lastNotice = null;
+  function showNotice(titleKey, textKey, btnKey) {
     if (document.getElementById('noticeModal')) return;
+    lastNotice = [titleKey, textKey, btnKey];
+    var title = T(titleKey), text = T(textKey);
     var back = h('div', { class: 'modal-back', id: 'noticeModal' });
-    var ok = h('button', { class: 'btn primary', type: 'button', text: btn || '知道了' });
+    var ok = h('button', { class: 'btn primary', type: 'button', text: btnKey ? T(btnKey) : T('common.ok') });
     ok.addEventListener('click', function () { back.remove(); });
     back.appendChild(h('div', { class: 'modal', role: 'alertdialog', 'aria-modal': 'true', 'aria-label': title },
       h('h2', { text: title }), h('p', { text: text }), h('div', { class: 'actions' }, ok)));
@@ -984,14 +1030,14 @@
 
   function seatEl(pl, room) {
     var meIsHost = room.you.isHost;
-    var st = !pl.connected ? ['離線', 'off'] : pl.isHost ? ['房主', ''] : pl.ready ? ['已準備', 'ready'] : ['未準備', ''];
+    var st = !pl.connected ? [T('seat.off'), 'off'] : pl.isHost ? [T('seat.host'), ''] : pl.ready ? [T('seat.ready'), 'ready'] : [T('seat.notReady'), ''];
     var li = h('li', { class: 'seat' });
     if (pl.isHost) li.appendChild(crown());
-    li.appendChild(h('span', { class: 'nm', text: pl.name + (pl.id === room.you.id ? '（你）' : '') }));
-    if (pl.cpu) { st = [pl.skill || '電腦', 'ready']; }
+    li.appendChild(h('span', { class: 'nm', text: pname(pl.name) + (pl.id === room.you.id ? T('seat.you') : '') }));
+    if (pl.cpu) { st = [SKILL_ID[pl.skill] ? T('skill.' + SKILL_ID[pl.skill]) : (pl.skill || T('seat.cpu')), 'ready']; }
     li.appendChild(h('span', { class: 'st ' + st[1], text: st[0] }));
     if (meIsHost && pl.id !== room.you.id && room.phase === 'lobby') {
-      var k = h('button', { class: 'btn small ghost', type: 'button', text: pl.cpu ? '移除' : '請出' });
+      var k = h('button', { class: 'btn small ghost', type: 'button', text: pl.cpu ? T('seat.remove') : T('seat.kick') });
       k.addEventListener('click', function () { Net.send({ type: 'kick', id: pl.id }); });
       li.appendChild(k);
     }
@@ -1003,11 +1049,11 @@
     if (!room || !room.you) return;
     var you = room.you, isHost = you.isHost, lobby = room.phase === 'lobby';
     $('#roomCode').textContent = room.id;
-    $('#roleTag').textContent = you.role === 'player' ? (isHost ? '房主' : '玩家') : '觀戰者';
+    $('#roleTag').textContent = you.role === 'player' ? (isHost ? T('role.host') : T('role.player')) : T('role.spec');
 
     var box = $('#roomDiff'); box.textContent = '';
     Rules.DIFF_LIST.forEach(function (id) {
-      var b = h('button', { type: 'button', role: 'radio', 'aria-checked': String(id === room.difficulty), text: Rules.DIFFS[id].name });
+      var b = h('button', { type: 'button', role: 'radio', 'aria-checked': String(id === room.difficulty), text: dn(id) });
       b.disabled = !(isHost && lobby);
       b.addEventListener('click', function () { Net.send({ type: 'difficulty', value: id }); });
       box.appendChild(b);
@@ -1021,10 +1067,10 @@
     room.players.forEach(function (pl, idx) { bySeat[pl.seat == null ? idx : pl.seat] = pl; });
     for (var i = 0; i < room.seats; i++) {
       if (bySeat[i]) { seats.appendChild(seatEl(bySeat[i], room)); continue; }
-      var es = h('li', { class: 'seat empty' }, h('span', { class: 'nm', text: '空位' }));
+      var es = h('li', { class: 'seat empty' }, h('span', { class: 'nm', text: T('seat.empty') }));
       if (isHost && lobby) {
-        var pick = h('span', { class: 'cpu-pick', role: 'group', 'aria-label': '在這個空位加入電腦' }, h('small', { text: '加入電腦' }));
-        [['easy', '新手'], ['normal', '一般'], ['hard', '高手']].forEach(function (k) {
+        var pick = h('span', { class: 'cpu-pick', role: 'group', 'aria-label': T('seat.addCpuAria') }, h('small', { text: T('seat.addCpu') }));
+        [['easy', T('skill.easy')], ['normal', T('skill.normal')], ['hard', T('skill.hard')]].forEach(function (k) {
           var cb = h('button', { type: 'button', class: 'btn small', text: k[1] });
           (function (seatNo) { cb.addEventListener('click', function () { Net.send({ type: 'add_cpu', skill: k[0], seat: seatNo }); }); })(i);
           pick.appendChild(cb);
@@ -1034,14 +1080,14 @@
       seats.appendChild(es);
     }
     $('#seatCount').textContent = room.players.length + '/' + room.seats;
-    $('#specLine').textContent = room.specs.length ? '觀戰中：' + room.specs.map(function (s) { return s.name; }).join('、') : '目前沒有觀戰者';
+    $('#specLine').textContent = room.specs.length ? T('room.specsLine', { names: room.specs.map(function (s) { return pname(s.name); }).join(T('sep.list')) }) : T('room.noSpecs');
 
     var rc = $('#resultCard');
     rc.hidden = !(room.result && room.result.length);
     if (!rc.hidden) {
       var ol = $('#resultList'); ol.textContent = '';
       room.result.forEach(function (r) {
-        ol.appendChild(h('li', { class: r.id === you.id ? 'me' : '' }, h('span', { class: 'no', text: String(r.place) }), h('span', { text: r.name }), h('span', { class: 'sc', text: String(r.score) })));
+        ol.appendChild(h('li', { class: r.id === you.id ? 'me' : '' }, h('span', { class: 'no', text: String(r.place) }), h('span', { text: pname(r.name) }), h('span', { class: 'sc', text: String(r.score) })));
       });
     }
 
@@ -1050,17 +1096,17 @@
     var allReady = live.every(function (p) { return p.isHost || p.ready; });
     rb.hidden = isHost || you.role !== 'player';
     var me = room.players.filter(function (p) { return p.id === you.id; })[0];
-    rb.textContent = me && me.ready ? '取消準備' : '準備';
+    rb.textContent = me && me.ready ? T('room.unready') : T('room.ready');
     rb.disabled = !lobby && room.phase !== 'ended';
     sb.hidden = !isHost;
     sb.disabled = !(lobby && live.length >= 2 && allReady);
     if (room.phase === 'ended') {
-      hint.textContent = '比賽結束了。' + (you.role === 'player' ? '按「準備」開始下一局。' : '');
-      if (you.role === 'player') { rb.hidden = false; rb.disabled = false; rb.textContent = '再來一局'; sb.hidden = true; }
+      hint.textContent = T('hint.ended') + (you.role === 'player' ? T('hint.endedPlayer') : '');
+      if (you.role === 'player') { rb.hidden = false; rb.disabled = false; rb.textContent = T('room.again'); sb.hidden = true; }
     }
-    else if (you.role === 'spec') hint.textContent = '你是觀戰者，比賽開始時會自動看到對戰畫面。';
-    else if (isHost) hint.textContent = live.length < 2 ? '至少要 2 位玩家才能開始：傳邀請連結給朋友，或在空位上選「加入電腦」。' : (allReady ? '大家都準備好了，可以開始！' : '還有玩家沒有準備好。');
-    else hint.textContent = '準備好之後，等房主按開始。';
+    else if (you.role === 'spec') hint.textContent = T('hint.spec');
+    else if (isHost) hint.textContent = live.length < 2 ? T('hint.hostNeed') : (allReady ? T('hint.hostGo') : T('hint.hostWait'));
+    else hint.textContent = T('hint.player');
 
     var ib = $('#inviteBox');
     ib.hidden = !(isHost && room.invite);
@@ -1078,7 +1124,7 @@
   });
   $('#btnStart').addEventListener('click', function () { Net.send({ type: 'start' }); });
   $('#roomListed').addEventListener('click', function () { var r = online.room; if (r) Net.send({ type: 'listed', value: !r.listed }); });
-  $('#btnRegen').addEventListener('click', function () { Net.send({ type: 'invite_regen' }); toast('舊連結已失效，已產生新的'); });
+  $('#btnRegen').addEventListener('click', function () { Net.send({ type: 'invite_regen' }); toast(T('toast.regen')); });
   $('#btnLeaveRoom').addEventListener('click', function () {
     Net.send({ type: 'leave' });
     online.room = null; online.joined = false; play = null;
@@ -1098,13 +1144,48 @@
       var t = h('textarea', { style: 'position:fixed;left:-999px' });
       t.value = text; document.body.appendChild(t); t.select();
       var ok = false; try { ok = document.execCommand('copy'); } catch (e) { /* 忽略 */ }
-      t.remove(); toast(ok ? okMsg : '請手動複製：' + text, ok ? 2200 : 8000);
+      t.remove(); toast(ok ? okMsg : T('toast.copyManual', { text: text }), ok ? 2200 : 8000);
     }
     if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(function () { toast(okMsg); }, fallback);
     else fallback();
   }
-  $('#btnCopyPlay').addEventListener('click', function () { copy(inviteUrl('play'), '已複製玩家邀請連結'); });
-  $('#btnCopyWatch').addEventListener('click', function () { copy(inviteUrl('watch'), '已複製觀戰邀請連結'); });
+  $('#btnCopyPlay').addEventListener('click', function () { copy(inviteUrl('play'), T('toast.copyPlay')); });
+  $('#btnCopyWatch').addEventListener('click', function () { copy(inviteUrl('watch'), T('toast.copyWatch')); });
+
+  /* ---------- 語言切換：重繪動態文字（不重置遊戲狀態） ---------- */
+  I18N.mountToggle({ after: $('#btnSettings') });
+  /* 「回遊戲大廳」連結帶上 ?lang=，跨來源也能同步語言 */
+  var lobbyLink = $('#lobbyLink'), lobbyBase = lobbyLink.getAttribute('href');
+  function syncLobbyLink() { lobbyLink.setAttribute('href', I18N.withLang(lobbyBase)); }
+  syncLobbyLink();
+  I18N.onChange(function () {
+    syncLobbyLink();
+    renderBest();
+    if (screen === 'solo') renderSoloDiffs();
+    if (screen === 'lobby') { renderCreateDiff(); renderRooms(lastRooms); netLabel(lastNet[0], lastNet[1]); }
+    if (invite) renderInvite(); else renderInviteErr();
+    buildQuick();
+    if (online.room && screen === 'room') renderRoom();
+    pauseLabel();
+    if (play) {
+      updateSummary();
+      Object.keys(play.opps || {}).forEach(function (id) {
+        var o = play.opps[id];
+        if (o.canvas) o.canvas.setAttribute('aria-label', T('play.oppOf', { name: pname(o.plName) }));
+        if (o.nameEl) o.nameEl.textContent = pname(o.plName);
+        if (o.rend) o.rend.bg = null;
+      });
+      if (play.mode === 'spec') buildSpecTabs();
+      var ovDlg = $('#overlay .dialog');
+      if (ovDlg) { if (play.resultShown) renderResult(); else if (play.paused && play.mode === 'solo') { renderPause(); var pf = $('#overlay .dialog button'); if (pf) pf.focus(); } }
+    }
+    rend.bg = null;
+    var sm = document.getElementById('settingsModal');
+    if (sm) { var op = modalOpener; closeSettings(); openSettings(op); }
+    if (document.getElementById('leaveModal') && play) { closeLeaveConfirm(); confirmLeaveOnline(); }
+    var nm = document.getElementById('noticeModal');
+    if (nm && lastNotice) { nm.remove(); showNotice(lastNotice[0], lastNotice[1], lastNotice[2]); }
+  });
 
   /* ---------- 啟動 ---------- */
   applySettings();

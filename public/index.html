@@ -1,10 +1,10 @@
 <!doctype html>
-<html lang="zh-Hant">
+<html lang="zh-Hant" data-i18n-title="meta.title">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
 <meta name="theme-color" content="#0b1020">
-<meta name="description" content="彈珠籃球：用彈板把籃球打進會移動的籃框，限時衝分！免費、免下載，手機平板電腦都能玩，還能線上跟朋友比分、觀戰。">
+<meta name="description" data-i18n-content="meta.desc" content="彈珠籃球：用彈板把籃球打進會移動的籃框，限時衝分！免費、免下載，手機平板電腦都能玩，還能線上跟朋友比分、觀戰。">
 <title>彈珠籃球</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='28' fill='%23ff7a1a'/%3E%3Cpath d='M4 32h56M32 4v56M12 12q20 20 0 40M52 12q-20 20 0 40' stroke='%232a1204' stroke-width='3' fill='none'/%3E%3C/svg%3E">
 <link rel="stylesheet" href="css/style.css">
@@ -14,15 +14,15 @@
 <div id="app" data-screen="home">
 
   <!-- 全域：右上角設定 -->
-  <button id="btnSettings" class="gear" type="button" aria-label="設定" aria-haspopup="dialog">
+  <button id="btnSettings" class="gear" type="button" data-i18n-attr="aria-label=nav.settings" aria-label="設定" aria-haspopup="dialog">
     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7zm9 4.2v-1.4l-2.1-.7a7 7 0 0 0-.6-1.4l1-2-1-1-2 1a7 7 0 0 0-1.4-.6l-.7-2.1h-1.4l-.7 2.1a7 7 0 0 0-1.4.6l-2-1-1 1 1 2a7 7 0 0 0-.6 1.4L3 11.3v1.4l2.1.7c.1.5.3 1 .6 1.4l-1 2 1 1 2-1c.4.3.9.5 1.4.6l.7 2.1h1.4l.7-2.1c.5-.1 1-.3 1.4-.6l2 1 1-1-1-2c.3-.4.5-.9.6-1.4z"/></svg>
   </button>
   <a id="lobbyLink" class="pill" href="https://pjh-eric.github.io/game-lobby/">
-    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" /></svg><span>遊戲大廳</span>
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" /></svg><span data-i18n="nav.lobby">遊戲大廳</span>
   </a>
 
   <!-- 首頁 -->
-  <section id="s-home" class="screen" aria-label="首頁">
+  <section id="s-home" class="screen" data-i18n-attr="aria-label=home.aria" aria-label="首頁">
     <div class="home-art" aria-hidden="true">
       <svg viewBox="0 0 320 240">
         <defs>
@@ -44,101 +44,101 @@
         </g>
       </svg>
     </div>
-    <h1 class="title"><span>彈珠</span><span>籃球</span></h1>
-    <p class="tagline">用彈板把籃球打進會動的籃框！</p>
+    <h1 class="title"><span data-i18n="home.title1">彈珠</span><span data-i18n="home.title2">籃球</span></h1>
+    <p class="tagline" data-i18n="home.tagline">用彈板把籃球打進會動的籃框！</p>
     <div class="menu">
-      <button class="btn big primary" type="button" data-go="solo">單機衝分</button>
-      <button class="btn big" type="button" data-go="lobby">線上對戰</button>
-      <button class="btn big ghost" type="button" data-go="how">怎麼玩</button>
+      <button class="btn big primary" type="button" data-go="solo" data-i18n="menu.solo">單機衝分</button>
+      <button class="btn big" type="button" data-go="lobby" data-i18n="menu.online">線上對戰</button>
+      <button class="btn big ghost" type="button" data-go="how" data-i18n="menu.how">怎麼玩</button>
     </div>
     <p class="foot" id="bestLine"></p>
   </section>
 
   <!-- 單機：選難度 -->
-  <section id="s-solo" class="screen" aria-label="單機模式">
-    <header class="bar"><button class="btn small back" type="button" data-go="home">返回</button><h2>選擇難度</h2></header>
-    <div class="diff-grid" id="diffGrid" role="radiogroup" aria-label="難度"></div>
-    <div class="menu"><button class="btn big primary" type="button" id="btnSoloStart">開始遊戲</button></div>
+  <section id="s-solo" class="screen" data-i18n-attr="aria-label=solo.aria" aria-label="單機模式">
+    <header class="bar"><button class="btn small back" type="button" data-go="home" data-i18n="common.back">返回</button><h2 data-i18n="solo.title">選擇難度</h2></header>
+    <div class="diff-grid" id="diffGrid" role="radiogroup" data-i18n-attr="aria-label=solo.diffAria" aria-label="難度"></div>
+    <div class="menu"><button class="btn big primary" type="button" id="btnSoloStart" data-i18n="solo.start">開始遊戲</button></div>
   </section>
 
   <!-- 怎麼玩 -->
-  <section id="s-how" class="screen" aria-label="玩法說明">
-    <header class="bar"><button class="btn small back" type="button" data-go="home">返回</button><h2>怎麼玩</h2></header>
+  <section id="s-how" class="screen" data-i18n-attr="aria-label=how.aria" aria-label="玩法說明">
+    <header class="bar"><button class="btn small back" type="button" data-go="home" data-i18n="common.back">返回</button><h2 data-i18n="how.title">怎麼玩</h2></header>
     <div class="howto">
-      <article class="card"><h3>目標</h3><p>用一片彈板擊出籃球，讓球由上往下穿過貼在右牆、開口朝左的籃框（難度越高上下移動越大）。時間到時分數最高就贏。</p></article>
-      <article class="card"><h3>操作</h3>
+      <article class="card"><h3 data-i18n="how.goalTitle">目標</h3><p data-i18n="how.goal">用一片彈板擊出籃球，讓球由上往下穿過貼在右牆、開口朝左的籃框（難度越高上下移動越大）。時間到時分數最高就贏。</p></article>
+      <article class="card"><h3 data-i18n="how.controlsTitle">操作</h3>
         <ul class="keys">
-          <li><b>點螢幕任何地方</b>：彈板揮起，放開就落下（手機、平板、滑鼠都一樣）</li>
-          <li><span class="keycap wide">Space</span><span class="keycap">Z</span><span class="keycap">←</span><span class="keycap">→</span> 鍵盤也可以</li>
-          <li><span class="keycap wide">Esc</span> 暫停（單機）</li>
+          <li data-i18n-html="how.k1"><b>點螢幕任何地方</b>：彈板揮起，放開就落下（手機、平板、滑鼠都一樣）</li>
+          <li data-i18n-html="how.k2"><span class="keycap wide">Space</span><span class="keycap">Z</span><span class="keycap">←</span><span class="keycap">→</span> 鍵盤也可以</li>
+          <li data-i18n-html="how.k3"><span class="keycap wide">Esc</span> 暫停（單機）</li>
         </ul>
-        <p>只有一片彈板：球從右邊斜坡滾下來，等它滾到彈板上，抓準時機點一下，把球打向籃框。打得越靠近彈板中段，力道越大。</p></article>
-      <article class="card"><h3>計分</h3>
+        <p data-i18n="how.controlsNote">只有一片彈板：球從右邊斜坡滾下來，等它滾到彈板上，抓準時機點一下，把球打向籃框。打得越靠近彈板中段，力道越大。</p></article>
+      <article class="card"><h3 data-i18n="how.scoreTitle">計分</h3>
         <ul class="plain">
-          <li>球穿過籃框：碰到框邊進 <b>20 分</b>；完全沒碰到的空心球 <b>30 分</b></li>
-          <li>連續進球有連擊：7 秒內再進一球，倍率 ×2、×3…最高 <b>×5</b></li>
-          <li>撞到發光的彈跳墊：每下 <b>1 分</b></li>
-          <li>球從彈板左邊的缺口掉下去就少一顆球；球用完或時間到，比賽結束</li>
+          <li data-i18n-html="how.s1">球穿過籃框：碰到框邊進 <b>20 分</b>；完全沒碰到的空心球 <b>30 分</b></li>
+          <li data-i18n-html="how.s2">連續進球有連擊：7 秒內再進一球，倍率 ×2、×3…最高 <b>×5</b></li>
+          <li data-i18n-html="how.s3">撞到發光的彈跳墊：每下 <b>1 分</b></li>
+          <li data-i18n="how.s4">球從彈板左邊的缺口掉下去就少一顆球；球用完或時間到，比賽結束</li>
         </ul></article>
-      <article class="card"><h3>四段難度</h3>
-        <p>幼幼班：籃框超大、下方有彈力墊不會漏球。簡單／普通／困難：籃框越來越小、上下移動越來越大，彈板越來越短，球數也不同。</p></article>
-      <article class="card"><h3>線上對戰</h3>
-        <p>2～4 人同時玩同一張台（各自一台，互不干擾），比誰分數高；其他人可以觀戰、聊天。房主可以產生邀請連結分享給朋友。</p></article>
+      <article class="card"><h3 data-i18n="how.diffTitle">四段難度</h3>
+        <p data-i18n="how.diff">幼幼班：籃框超大、下方有彈力墊不會漏球。簡單／普通／困難：籃框越來越小、上下移動越來越大，彈板越來越短，球數也不同。</p></article>
+      <article class="card"><h3 data-i18n="how.onlineTitle">線上對戰</h3>
+        <p data-i18n="how.online">2～4 人同時玩同一張台（各自一台，互不干擾），比誰分數高；其他人可以觀戰、聊天。房主可以產生邀請連結分享給朋友。</p></article>
     </div>
   </section>
 
   <!-- 線上大廳 -->
-  <section id="s-lobby" class="screen" aria-label="線上大廳">
-    <header class="bar"><button class="btn small back" type="button" data-go="home">返回</button><h2>線上大廳</h2><span id="netState" class="net-state" role="status"></span></header>
+  <section id="s-lobby" class="screen" data-i18n-attr="aria-label=lobby.aria" aria-label="線上大廳">
+    <header class="bar"><button class="btn small back" type="button" data-go="home" data-i18n="common.back">返回</button><h2 data-i18n="lobby.title">線上大廳</h2><span id="netState" class="net-state" role="status"></span></header>
     <div id="inviteCard" class="card invite" hidden></div>
     <div class="lobby-grid">
       <div class="card">
-        <h3>你的暱稱</h3>
-        <label class="field"><span class="sr">暱稱</span><input id="nickInput" type="text" maxlength="12" autocomplete="off" placeholder="輸入暱稱（可留白）"></label>
-        <h3>建立房間</h3>
-        <div class="seg" id="createDiff" role="radiogroup" aria-label="房間難度"></div>
-        <div class="row"><span>公開房間</span><button class="sw" id="createListed" type="button" role="switch" aria-checked="true"><i></i></button></div>
-        <button class="btn primary" type="button" id="btnCreate">建立房間</button>
+        <h3 data-i18n="nick.title">你的暱稱</h3>
+        <label class="field"><span class="sr" data-i18n="nick.label">暱稱</span><input id="nickInput" type="text" maxlength="12" autocomplete="off" data-i18n-attr="placeholder=nick.ph" placeholder="輸入暱稱（可留白）"></label>
+        <h3 data-i18n="create.title">建立房間</h3>
+        <div class="seg" id="createDiff" role="radiogroup" data-i18n-attr="aria-label=create.diffAria" aria-label="房間難度"></div>
+        <div class="row"><span data-i18n="room.listed">公開房間</span><button class="sw" id="createListed" type="button" role="switch" aria-checked="true"><i></i></button></div>
+        <button class="btn primary" type="button" id="btnCreate" data-i18n="create.title">建立房間</button>
       </div>
       <div class="card">
-        <h3>房間列表</h3>
+        <h3 data-i18n="rooms.title">房間列表</h3>
         <ul id="roomList" class="rooms" aria-live="polite"></ul>
-        <p id="roomEmpty" class="muted">目前沒有公開房間，建立一間吧！</p>
+        <p id="roomEmpty" class="muted" data-i18n="rooms.empty">目前沒有公開房間，建立一間吧！</p>
       </div>
     </div>
   </section>
 
   <!-- 房間 -->
-  <section id="s-room" class="screen" aria-label="房間">
-    <header class="bar"><button class="btn small back" type="button" id="btnLeaveRoom">離開房間</button><h2>房間 <b id="roomCode"></b></h2><span id="roleTag" class="tag"></span></header>
+  <section id="s-room" class="screen" data-i18n-attr="aria-label=room.aria" aria-label="房間">
+    <header class="bar"><button class="btn small back" type="button" id="btnLeaveRoom" data-i18n="room.leave">離開房間</button><h2><span data-i18n="room.heading">房間</span> <b id="roomCode"></b></h2><span id="roleTag" class="tag"></span></header>
     <div class="room-grid">
       <div class="room-main">
         <div class="card">
-          <h3>難度</h3>
-          <div class="seg" id="roomDiff" role="radiogroup" aria-label="難度"></div>
-          <div class="row" id="listedRow"><span>公開房間</span><button class="sw" id="roomListed" type="button" role="switch" aria-checked="true"><i></i></button></div>
+          <h3 data-i18n="room.diff">難度</h3>
+          <div class="seg" id="roomDiff" role="radiogroup" data-i18n-attr="aria-label=solo.diffAria" aria-label="難度"></div>
+          <div class="row" id="listedRow"><span data-i18n="room.listed">公開房間</span><button class="sw" id="roomListed" type="button" role="switch" aria-checked="true"><i></i></button></div>
         </div>
-        <div class="card"><h3>玩家 <small id="seatCount"></small></h3><ul id="seats" class="seats"></ul><p class="muted" id="specLine"></p></div>
-        <div class="card" id="resultCard" hidden><h3>上一局結果</h3><ol id="resultList" class="rank"></ol></div>
+        <div class="card"><h3><span data-i18n="room.players">玩家</span> <small id="seatCount"></small></h3><ul id="seats" class="seats"></ul><p class="muted" id="specLine"></p></div>
+        <div class="card" id="resultCard" hidden><h3 data-i18n="room.lastResult">上一局結果</h3><ol id="resultList" class="rank"></ol></div>
         <div class="actions">
-          <button class="btn primary" type="button" id="btnReady">準備</button>
-          <button class="btn primary" type="button" id="btnStart">開始遊戲</button>
+          <button class="btn primary" type="button" id="btnReady" data-i18n="room.ready">準備</button>
+          <button class="btn primary" type="button" id="btnStart" data-i18n="room.start">開始遊戲</button>
         </div>
         <p class="muted" id="startHint"></p>
         <div class="card" id="inviteBox" hidden>
-          <h3>邀請連結</h3>
+          <h3 data-i18n="invite.title">邀請連結</h3>
           <div class="linkrow">
-            <span class="linklabel">玩家</span>
-            <div class="linkbox" id="linkPlay" tabindex="0" role="textbox" aria-readonly="true" aria-label="玩家邀請連結"></div>
-            <button class="btn small" type="button" id="btnCopyPlay">複製</button>
+            <span class="linklabel" data-i18n="invite.play">玩家</span>
+            <div class="linkbox" id="linkPlay" tabindex="0" role="textbox" aria-readonly="true" data-i18n-attr="aria-label=invite.playAria" aria-label="玩家邀請連結"></div>
+            <button class="btn small" type="button" id="btnCopyPlay" data-i18n="invite.copy">複製</button>
           </div>
           <div class="linkrow">
-            <span class="linklabel">觀戰</span>
-            <div class="linkbox" id="linkWatch" tabindex="0" role="textbox" aria-readonly="true" aria-label="觀戰邀請連結"></div>
-            <button class="btn small" type="button" id="btnCopyWatch">複製</button>
+            <span class="linklabel" data-i18n="invite.watch">觀戰</span>
+            <div class="linkbox" id="linkWatch" tabindex="0" role="textbox" aria-readonly="true" data-i18n-attr="aria-label=invite.watchAria" aria-label="觀戰邀請連結"></div>
+            <button class="btn small" type="button" id="btnCopyWatch" data-i18n="invite.copy">複製</button>
           </div>
-          <div class="actions wrap"><button class="btn small ghost" type="button" id="btnRegen">撤銷並重發</button></div>
-          <p class="muted">連結只對這個房間有效，房間結束或撤銷後就失效。點連結文字可全選。</p>
+          <div class="actions wrap"><button class="btn small ghost" type="button" id="btnRegen" data-i18n="invite.regen">撤銷並重發</button></div>
+          <p class="muted" data-i18n="invite.note">連結只對這個房間有效，房間結束或撤銷後就失效。點連結文字可全選。</p>
         </div>
       </div>
       <div class="room-chat card" id="roomChatSlot"></div>
@@ -146,25 +146,25 @@
   </section>
 
   <!-- 遊戲畫面 -->
-  <section id="s-play" class="screen" aria-label="遊戲">
-    <aside id="panel" aria-label="資訊欄">
-      <div class="panel-head"><strong>資訊</strong><button class="btn small" type="button" id="panelClose">收合</button></div>
+  <section id="s-play" class="screen" data-i18n-attr="aria-label=play.aria" aria-label="遊戲">
+    <aside id="panel" data-i18n-attr="aria-label=panel.aria" aria-label="資訊欄">
+      <div class="panel-head"><strong data-i18n="panel.title">資訊</strong><button class="btn small" type="button" id="panelClose" data-i18n="panel.close">收合</button></div>
       <div id="sumBox" class="sum"></div>
       <div id="panelChatSlot" class="chat-slot"></div>
     </aside>
     <div id="stage">
       <div id="hud">
-        <div class="hud-score"><small>分數</small><b id="hScore">0</b></div>
-        <div class="hud-time"><small>時間</small><b id="hTime">90</b><i class="timebar"><u id="hBar"></u></i></div>
-        <div class="hud-balls"><small>球</small><span id="hBalls"></span></div>
-        <div class="hud-combo" id="hCombo" hidden>連擊 ×<b id="hComboN">1</b></div>
+        <div class="hud-score"><small data-i18n="hud.score">分數</small><b id="hScore">0</b></div>
+        <div class="hud-time"><small data-i18n="hud.time">時間</small><b id="hTime">90</b><i class="timebar"><u id="hBar"></u></i></div>
+        <div class="hud-balls"><small data-i18n="hud.balls">球</small><span id="hBalls"></span></div>
+        <div class="hud-combo" id="hCombo" hidden><span data-i18n="hud.combo">連擊 ×</span><b id="hComboN">1</b></div>
       </div>
-      <button id="panelToggle" class="btn small panel-toggle" type="button" aria-expanded="false">資訊<i class="dot" id="unreadDot" hidden></i></button>
-      <button id="btnPause" class="btn small pause-btn" type="button">暫停</button>
-      <div id="cvWrap"><canvas id="cv" aria-label="彈珠台"></canvas><div id="oppCol" class="opp-col" aria-label="對手畫面"></div><div id="specTabs" class="spec-tabs" role="tablist"></div></div>
+      <button id="panelToggle" class="btn small panel-toggle" type="button" aria-expanded="false"><span data-i18n="panel.title">資訊</span><i class="dot" id="unreadDot" hidden></i></button>
+      <button id="btnPause" class="btn small pause-btn" type="button" data-i18n="play.pause">暫停</button>
+      <div id="cvWrap"><canvas id="cv" data-i18n-attr="aria-label=play.canvas" aria-label="彈珠台"></canvas><div id="oppCol" class="opp-col" data-i18n-attr="aria-label=play.oppCol" aria-label="對手畫面"></div><div id="specTabs" class="spec-tabs" role="tablist"></div></div>
       <div id="ctl" aria-hidden="true">
         <svg viewBox="0 0 90 40"><path class="fl" d="M80 12 L14 26" /></svg>
-        <span>點畫面任何地方，彈板就會揮起</span>
+        <span data-i18n="play.hint">點畫面任何地方，彈板就會揮起</span>
         <span class="keycaps"><span class="keycap wide">Space</span><span class="keycap">Z</span><span class="keycap">←</span><span class="keycap">→</span></span>
       </div>
       <div id="overlay" hidden></div>
@@ -173,12 +173,12 @@
 
   <!-- 聊天（會在房間與遊戲畫面之間搬家） -->
   <div id="chat" class="chat" hidden>
-    <h3>聊天室 <i class="dot" id="chatDot" hidden></i></h3>
+    <h3><span data-i18n="chat.title">聊天室</span> <i class="dot" id="chatDot" hidden></i></h3>
     <ul id="chatLog" class="chat-log" aria-live="polite"></ul>
     <div class="quick" id="quick"></div>
     <form id="chatForm" class="chat-form" autocomplete="off">
-      <label class="field"><span class="sr">聊天內容</span><input id="chatInput" type="text" maxlength="80" placeholder="說點什麼…"></label>
-      <button class="btn small primary" type="submit">送出</button>
+      <label class="field"><span class="sr" data-i18n="chat.label">聊天內容</span><input id="chatInput" type="text" maxlength="80" data-i18n-attr="placeholder=chat.ph" placeholder="說點什麼…"></label>
+      <button class="btn small primary" type="submit" data-i18n="chat.send">送出</button>
     </form>
   </div>
 
@@ -186,6 +186,8 @@
   <div id="toast" role="status" aria-live="polite"></div>
 </div>
 
+<script src="js/i18n.js"></script>
+<script src="js/locales.js"></script>
 <script src="js/config.js"></script>
 <script src="js/rng.js"></script>
 <script src="js/rules.js"></script>
