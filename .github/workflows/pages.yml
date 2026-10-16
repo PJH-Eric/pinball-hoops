@@ -39,6 +39,9 @@ jobs:
           GAME_SERVER_URL: ${{ inputs.game_server_url || vars.GAME_SERVER_URL || env.DEFAULT_GAME_SERVER_URL }}
         run: node scripts/inject-server-url.js
       - uses: actions/configure-pages@v5
+      - name: 驗證並注入 GA4 與 SEO
+        run: node tests/seo.js && node scripts/inject-seo.js
+
       - uses: actions/upload-pages-artifact@v3
         with:
           path: public

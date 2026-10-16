@@ -301,6 +301,9 @@
   function stopLoop() { if (raf) { cancelAnimationFrame(raf); raf = 0; } }
 
   function startPlay(o) {
+    if (o.mode !== 'spec') GameAnalytics.start({
+      mode: o.mode, difficulty: o.diff, players: o.players || 1
+    }, o.mode === 'online' ? o.roomId + '|' + o.round : null);
     closeOverlay();
     rend.reset();
     var online = o.mode === 'online' || o.mode === 'spec';
@@ -707,6 +710,7 @@
   }
 
   function showResult() {
+    if (play && play.mode === 'solo') GameAnalytics.end({ result: 'complete' });
     var p = play;
     if (!p) return;
     p.resultShown = true;
@@ -949,6 +953,7 @@
     if (r.phase === 'playing') ensureOnlinePlay(r);
     else if (screen === 'play' && play && play.mode !== 'solo') {
       if (r.phase === 'ended') {
+        if (play.mode === 'online') GameAnalytics.end({ result: 'complete' });
         if (play.mode === 'online' && !play.over) { play.over = true; onlineReport(true); }
         if (play.mode === 'spec' || !play.resultShown) { play.resultShown = true; sfx('win'); }
         renderResult();
@@ -964,7 +969,7 @@
     /* 已經有進行中的本機遊戲才算玩家；頁面重載後的玩家只能看 */
     if (mode === 'online' && r.startAt + Rules.DIFFS[r.difficulty].duration * 1000 < Net.serverNow()) mode = 'spec';
     if (mode === 'online' && Net.serverNow() - r.startAt > 4000) mode = 'spec';
-    startPlay({ mode: mode, diff: r.difficulty, seed: r.seed, roomId: r.id, round: r.round, startAt: r.startAt });
+    startPlay({ mode: mode, diff: r.difficulty, seed: r.seed, roomId: r.id, round: r.round, startAt: r.startAt, players: r.players.length });
   }
 
   Net.on('closed', function (m) {

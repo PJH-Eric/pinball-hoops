@@ -1,5 +1,7 @@
 /* ===== tests/verify.js — 規則核心、房間邏輯、設定解析的單元測試（零依賴）===== */
 'use strict';
+
+require('./seo.js');
 const assert = require('assert');
 const Rules = require('../public/js/rules.js');
 const { createHub, cleanName } = require('../lib/rooms.js');

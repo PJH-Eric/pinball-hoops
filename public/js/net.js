@@ -38,6 +38,7 @@
   }
 
   function emit(type, msg) {
+    if (root.GameAnalytics) root.GameAnalytics.roomResponse(type, !!msg.room);
     (handlers[type] || []).forEach(function (fn) { fn(msg); });
   }
 
@@ -108,7 +109,11 @@
   function stopPing() { if (pingTimer) { clearInterval(pingTimer); pingTimer = null; } }
 
   function send(msg) {
-    if (ws && ws.readyState === 1) { ws.send(JSON.stringify(msg)); return true; }
+    if (ws && ws.readyState === 1) {
+      ws.send(JSON.stringify(msg));
+      if (root.GameAnalytics) root.GameAnalytics.roomRequest(msg);
+      return true;
+    }
     return false;
   }
 
