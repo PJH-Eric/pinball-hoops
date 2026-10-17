@@ -215,12 +215,6 @@ const server = http.createServer((req, res) => {
   try { url = decodeURIComponent((req.url || '/').split('?')[0]); } catch (e) { url = '/'; }
   res.setHeader('Access-Control-Allow-Origin', ALLOW_ORIGIN);
 
-  if (url === '/api/presence') {
-    const c = counts();
-    json(res, 200, { gameId: GAME_ID, online: people.size, players: c.players, spectators: c.spectators,
-      lobby: c.lobby, rooms: hub.rooms.size, updatedAt: new Date().toISOString() });
-    return;
-  }
   if (url === '/api/rooms') { json(res, 200, { rooms: hub.listRooms(), seats: CONST.SEATS }); return; }
   if (url === '/health') {
     const c = counts();

@@ -50,14 +50,6 @@ server.listen(0, async () => {
     assert.deepStrictEqual(r.rooms, []);
   });
 
-  await t('/api/presence 格式符合遊戲大廳', async () => {
-    const p = await (await fetch(base + '/api/presence')).json();
-    assert.strictEqual(p.gameId, 'pinball-hoops');
-    for (const k of ['online', 'players', 'spectators', 'lobby', 'rooms']) assert.ok(Number.isInteger(p[k]) && p[k] >= 0, k);
-    assert.ok(p.online >= p.lobby);
-    assert.ok(!Number.isNaN(Date.parse(p.updatedAt)));
-  });
-
   await t('房主建立房間，大廳列表更新', async () => {
     guest.send({ type: 'hello', name: '客人' });
     await guest.wait(m => m.type === 'lobby');
