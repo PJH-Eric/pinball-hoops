@@ -1,0 +1,38 @@
+{
+  "zh-Hant": {
+    "name": "彈珠籃球",
+    "summary": "只有一片彈板，點畫面揮板把球打進會上下移動的籃框。限時衝分，四段難度，也能線上同台競分或觀戰。",
+    "modes": [
+      "單機四段難度",
+      "電腦對戰",
+      "線上房間",
+      "觀戰",
+      "邀請連結"
+    ],
+    "controls": "點畫面任何地方（或按空白鍵）揮板，把球打進籃框"
+  },
+  "zh-Hans": {
+    "name": "弹珠篮球",
+    "summary": "只有一片弹板，点画面挥板把球打进会上下移动的篮框。限时冲分，四段难度，也能线上同台竞分或观战。",
+    "modes": [
+      "单机四段难度",
+      "电脑对战",
+      "线上房间",
+      "观战",
+      "邀请连结"
+    ],
+    "controls": "点画面任何地方（或按空白键）挥板，把球打进篮框"
+  },
+  "en": {
+    "name": "Pinball Hoops",
+    "summary": "With just one paddle, tap the screen to swing it and knock the ball into the moving hoop. Beat the clock for points, with four difficulty levels, plus online score battles and spectating.",
+    "modes": [
+      "Solo, 4 Difficulties",
+      "vs Computer",
+      "Online Room",
+      "Spectate",
+      "Invite Link"
+    ],
+    "controls": "Tap anywhere (or press the space bar) to swing the paddle and sink the ball"
+  }
+}
