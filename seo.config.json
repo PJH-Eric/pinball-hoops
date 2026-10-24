@@ -8,6 +8,6 @@
   "genre": "運動",
   "players": "1-4",
   "iconUrl": "https://pjh-eric.github.io/pinball-hoops/favicon-96.png",
-  "ogImage": "https://pjh-eric.github.io/pinball-hoops/og-image.png",
-  "ogImageAlt": "彈珠籃球遊戲圖示"
+  "ogImage": "https://pjh-eric.github.io/pinball-hoops/assets/images/cover.webp",
+  "ogImageAlt": "彈珠籃球 遊戲封面"
 }
