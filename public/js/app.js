@@ -86,6 +86,7 @@
   var chatEl = $('#chat');
 
   function go(name) {
+    if (window.ServerOutage) window.ServerOutage.setScreen(name);
     screen = name;
     app.dataset.screen = name;
     if (name !== 'play') { stopLoop(); }
