@@ -24,6 +24,7 @@
 
   function setState(s, info) {
     state = s;
+    if (root.ServerOutage) root.ServerOutage.state(s);
     var NL = root.NetworkLatency;
     if (NL) {
       if (s === 'open') { NL.setProbe(function () { send({ type: 'ping', t: Date.now() }); }); NL.setActive(true); }
@@ -54,6 +55,7 @@
         .then(function () { done(); })
         .catch(function () {
           clearTimeout(to);
+          if (!want) return;
           tries++;
           setState('waking', { tries: tries });
           timer = setTimeout(poll, 3000);
@@ -121,6 +123,7 @@
     if (!Config.serverUrl) { setState('unavailable'); return false; }
     if (want && (state === 'open' || state === 'connecting' || state === 'waking')) return true;
     want = true;
+    setState('connecting');
     wake(open);
     return true;
   }
