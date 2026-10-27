@@ -1,5 +1,5 @@
 /* ===== scripts/online-check.js — 真的起一個伺服器，用 3 條 WebSocket 走完整個線上流程 =====
- * 需要 Node 22+（內建 WebSocket 客戶端）。用法：node scripts/online-check.js
+ * 需要 Node 26+（內建 WebSocket 客戶端）。用法：node scripts/online-check.js
  */
 'use strict';
 const assert = require('assert');
