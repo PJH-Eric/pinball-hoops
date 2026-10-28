@@ -86,7 +86,7 @@ function sendLobby() {
   lobbyDirty = false;
   const list = hub.listRooms();
   for (const [id, it] of people) {
-    if (!it.person.roomId) send(id, { type: 'lobby', rooms: list });
+    if (!it.person.roomId) send(id, { type: 'lobby', rooms: list, online: people.size });
   }
 }
 
@@ -120,7 +120,8 @@ function handle(person, msg) {
   switch (msg.type) {
     case 'hello': {
       if (typeof msg.name === 'string') person.name = hub.cleanName(msg.name);
-      send(id, { type: 'lobby', rooms: hub.listRooms() });
+      send(id, { type: 'lobby', rooms: hub.listRooms(), online: people.size });
+      lobbyDirty = true;
       break;
     }
     case 'create': {
@@ -146,7 +147,7 @@ function handle(person, msg) {
       send(id, { type: 'chat_history', chat: r.room.chat });
       break;
     }
-    case 'leave': hub.leave(person); send(id, { type: 'lobby', rooms: hub.listRooms() }); break;
+    case 'leave': hub.leave(person); send(id, { type: 'lobby', rooms: hub.listRooms(), online: people.size }); break;
     case 'ready': hub.setReady(person, msg.on); break;
     case 'difficulty': hub.setDifficulty(person, msg.value); break;
     case 'listed': hub.setListed(person, msg.value); break;
@@ -271,6 +272,7 @@ ws.attach(server, {
       const room = hub.rooms.get(person.roomId);
       const keepGhost = room && room.phase === 'playing' && hub.players(room).some(m => m.id === person.id);
       hub.markDisconnected(person);
+      lobbyDirty = true;
       if (keepGhost && key && hub.rooms.get(person.roomId)) {
         /* 對局中斷線：保留身分一小段時間，讓他換連線回來 */
         const timer = setTimeout(() => { byKey.delete(key); }, RESUME_MS);

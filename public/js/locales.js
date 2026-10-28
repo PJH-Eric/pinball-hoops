@@ -68,6 +68,7 @@
 
     'lobby.aria': '線上大廳',
     'lobby.title': '線上大廳',
+    'lobby.onlineCount': '目前在線：{n} 人',
     'nick.title': '你的暱稱',
     'nick.label': '暱稱',
     'nick.ph': '輸入暱稱（可留白）',
@@ -332,6 +333,7 @@
 
     'lobby.aria': 'Online lobby',
     'lobby.title': 'Online Lobby',
+    'lobby.onlineCount': 'Online now: {n}',
     'nick.title': 'Your Nickname',
     'nick.label': 'Nickname',
     'nick.ph': 'Enter a nickname (optional)',
@@ -594,6 +596,7 @@
     "how.online": "2～4 人同时玩同一张台（各自一台，互不干扰），比谁分数高；其他人可以观战、聊天。房主可以产生邀请连结分享给朋友。",
     "lobby.aria": "线上大厅",
     "lobby.title": "线上大厅",
+    "lobby.onlineCount": "目前在线：{n} 人",
     "nick.title": "你的暱称",
     "nick.label": "暱称",
     "nick.ph": "输入暱称（可留白）",

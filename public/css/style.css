@@ -139,6 +139,7 @@ ul, ol { padding: 0; list-style: none; }
 /* ----- 大廳 / 房間 ----- */
 .lobby-grid, .room-grid { width: min(100%, 980px); display: grid; gap: 14px; grid-template-columns: 1fr; align-items: start; }
 .rooms li { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px dashed var(--line); flex-wrap: wrap; }
+.online-count { width: fit-content; max-width: 100%; margin: 0 0 10px; padding: 5px 12px; border: 2px solid var(--line); border-radius: 999px; background: #fff3dd; color: var(--ink); font-weight: 800; }
 .rooms .info { flex: 1 1 140px; } .rooms .info b { font-size: 18px; letter-spacing: .1em; }
 .rooms .info small { display: block; color: var(--muted); }
 .invite { border-color: var(--yellow); margin-bottom: 14px; max-width: 980px; }

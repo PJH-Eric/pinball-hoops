@@ -838,8 +838,11 @@
   function nick() { return ($('#nickInput').value || '').trim(); }
 
   var lastNet = ['idle'];
+  var lobbyOnlineCount = null;
   function netLabel(state, info) {
     lastNet = [state, info];
+    if (state !== 'open') lobbyOnlineCount = null;
+    paintLobbyCount();
     var el = $('#netState');
     var map = {
       open: ['net.open', 'ok'], connecting: ['net.connecting', 'warn'], closed: ['net.closed', 'bad'],
@@ -886,10 +889,20 @@
     else Net.send({ type: 'hello', name: nick() });
   });
 
-  Net.on('lobby', function (m) { renderRooms(m.rooms || []); });
+  Net.on('lobby', function (m) {
+    lobbyOnlineCount = Number.isInteger(m.online) && m.online >= 0 ? m.online : null;
+    renderRooms(m.rooms || []);
+  });
   var lastRooms = [];
+  function paintLobbyCount() {
+    var count = $('#onlineCount');
+    var validOnline = Number.isInteger(lobbyOnlineCount);
+    count.hidden = !validOnline;
+    count.textContent = validOnline ? T('lobby.onlineCount', { n: lobbyOnlineCount }) : '';
+  }
   function renderRooms(list) {
     lastRooms = list;
+    paintLobbyCount();
     var ul = $('#roomList'); ul.textContent = '';
     $('#roomEmpty').hidden = list.length > 0;
     var can = Net.getState() === 'open';
