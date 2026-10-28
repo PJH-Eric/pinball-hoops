@@ -189,12 +189,13 @@
         <div class="hud-score"><small data-i18n="hud.score">分數</small><b id="hScore">0</b></div>
         <div class="hud-time"><small data-i18n="hud.time">時間</small><b id="hTime">90</b><i class="timebar"><u id="hBar"></u></i></div>
         <div class="hud-balls"><small data-i18n="hud.balls">球</small><span id="hBalls"></span></div>
-        <div class="hud-combo" id="hCombo" hidden><span data-i18n="hud.combo">連擊 ×</span><b id="hComboN">1</b> <small id="hComboTime"></small></div>
-        <div class="hud-combo" id="hBonus" hidden data-i18n="hud.bonus">加分 +10</div>
       </div>
       <button id="panelToggle" class="btn small panel-toggle" type="button" aria-expanded="false"><span data-i18n="panel.title">資訊</span><i class="dot" id="unreadDot" hidden></i></button>
       <button id="btnPause" class="btn small pause-btn" type="button" data-i18n="play.pause">暫停</button>
-      <div id="cvWrap"><canvas id="cv" data-i18n-attr="aria-label=play.canvas" aria-label="彈珠台"></canvas><div id="oppCol" class="opp-col" data-i18n-attr="aria-label=play.oppCol" aria-label="對手畫面"></div><div id="specTabs" class="spec-tabs" role="tablist"></div></div>
+      <div id="cvWrap"><div class="play-badges">
+        <div class="hud-combo" id="hCombo" hidden><span data-i18n="hud.combo">連擊 ×</span><b id="hComboN">1</b> <small id="hComboTime"></small></div>
+        <div class="hud-combo" id="hBonus" hidden data-i18n="hud.bonus">加分 +10</div>
+        </div><canvas id="cv" data-i18n-attr="aria-label=play.canvas" aria-label="彈珠台"></canvas><div id="oppCol" class="opp-col" data-i18n-attr="aria-label=play.oppCol" aria-label="對手畫面"></div><div id="specTabs" class="spec-tabs" role="tablist"></div></div>
       <div id="ctl" aria-hidden="true">
         <svg viewBox="0 0 90 40"><path class="fl" d="M80 12 L14 26" /></svg>
         <span data-i18n="play.hint">點畫面任何地方，彈板就會揮起</span>

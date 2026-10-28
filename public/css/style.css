@@ -189,11 +189,13 @@ ul, ol { padding: 0; list-style: none; }
 .ball-ico.used { filter: grayscale(1) brightness(.4); box-shadow: none; }
 .hud-combo { align-self: center; padding: 4px 10px; border-radius: 6px; background: var(--magenta); color: #20000f; font-weight: 900; }
 .hud-combo b { color: #20000f; font-size: 22px; text-shadow: none; }
-#hud .hud-combo small { color: #20000f; letter-spacing: 0; }
+.hud-combo small { color: #20000f; letter-spacing: 0; }
 #hBonus { background: var(--yellow); }
 .panel-toggle { position: absolute; z-index: 7; top: calc(var(--sat) + 60px); left: calc(var(--sal) + 8px); min-height: 36px; padding: 4px 12px; font-size: 14px; }
 .pause-btn { position: absolute; z-index: 7; top: calc(var(--sat) + 60px); right: calc(var(--sar) + 8px); min-height: 36px; padding: 4px 12px; font-size: 14px; --c: var(--magenta); }
 #cvWrap { position: relative; flex: 1 1 auto; min-height: 0; width: 100%; display: flex; align-items: center; justify-content: center; }
+.play-badges { position: absolute; z-index: 2; top: 6px; left: 50%; transform: translateX(-50%); display: flex; gap: 6px; justify-content: center; max-width: 100%; pointer-events: none; }
+.play-badges .hud-combo { white-space: nowrap; font-size: 14px; }
 #cv { display: block; border-radius: 10px; box-shadow: 0 0 0 3px #05070f, 0 0 26px rgba(34,228,255,.25); touch-action: none; }
 #ctl { flex: 0 0 auto; width: 100%; max-width: 640px; display: flex; gap: 10px; align-items: center; justify-content: center; padding-top: 6px; min-height: 40px;
   color: var(--muted); font-size: 14px; font-weight: 700; pointer-events: none; }
