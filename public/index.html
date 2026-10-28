@@ -79,6 +79,8 @@
       <button class="btn big ghost" type="button" data-go="how" data-i18n="menu.how">怎麼玩</button>
     </div>
     <p class="foot" id="bestLine"></p>
+    <p class="foot" id="recordLine"></p>
+    <p class="foot" id="achievementLine"></p>
   </section>
 
   <!-- 單機：選難度 -->
@@ -105,6 +107,8 @@
           <li data-i18n-html="how.s1">球穿過籃框：碰到框邊進 <b>20 分</b>；完全沒碰到的空心球 <b>30 分</b></li>
           <li data-i18n-html="how.s2">連續進球有連擊：7 秒內再進一球，倍率 ×2、×3…最高 <b>×5</b></li>
           <li data-i18n-html="how.s3">撞到發光的彈跳墊：每下 <b>1 分</b></li>
+          <li data-i18n="how.bonus">每 20 秒開始 5 秒加分時段，進球額外加 10 分。</li>
+          <li data-i18n="how.timing">球接近彈板的擊球區時會亮起提示，可在設定關閉。</li>
           <li data-i18n="how.s4">球從彈板左邊的缺口掉下去就少一顆球；球用完或時間到，比賽結束</li>
         </ul></article>
       <article class="card"><h3 data-i18n="how.diffTitle">四段難度</h3>
@@ -184,7 +188,8 @@
         <div class="hud-score"><small data-i18n="hud.score">分數</small><b id="hScore">0</b></div>
         <div class="hud-time"><small data-i18n="hud.time">時間</small><b id="hTime">90</b><i class="timebar"><u id="hBar"></u></i></div>
         <div class="hud-balls"><small data-i18n="hud.balls">球</small><span id="hBalls"></span></div>
-        <div class="hud-combo" id="hCombo" hidden><span data-i18n="hud.combo">連擊 ×</span><b id="hComboN">1</b></div>
+        <div class="hud-combo" id="hCombo" hidden><span data-i18n="hud.combo">連擊 ×</span><b id="hComboN">1</b> <small id="hComboTime"></small></div>
+        <div class="hud-combo" id="hBonus" hidden data-i18n="hud.bonus">加分 +10</div>
       </div>
       <button id="panelToggle" class="btn small panel-toggle" type="button" aria-expanded="false"><span data-i18n="panel.title">資訊</span><i class="dot" id="unreadDot" hidden></i></button>
       <button id="btnPause" class="btn small pause-btn" type="button" data-i18n="play.pause">暫停</button>

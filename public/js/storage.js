@@ -7,9 +7,11 @@
   var DEFAULTS = {
     musicOn: true, sfxOn: true, musicLevel: 3, sfxLevel: 4,
     vibrate: true, reduceMotion: false, contrast: false,
+    timingHint: true,
     showHints: true,        /* 顯示鍵帽提示 */
     nick: '',
-    best: {}                /* { 難度: 最高分 } */
+    best: {},               /* { 難度: 最高分 } */
+    records: {}
   };
 
   function clone(o) { return JSON.parse(JSON.stringify(o)); }
@@ -32,9 +34,9 @@
   function set(key, value) { data[key] = value; save(); }
 
   function reset() {
-    var keep = { nick: data.nick, best: data.best };
+    var keep = { nick: data.nick, best: data.best, records: data.records };
     data = clone(DEFAULTS);
-    data.nick = keep.nick; data.best = keep.best;
+    data.nick = keep.nick; data.best = keep.best; data.records = keep.records;
     save();
   }
 
@@ -45,9 +47,19 @@
     return false;
   }
 
+  function recordGame(summary) {
+    var r = data.records || {};
+    r.games = (r.games || 0) + 1;
+    r.hoops = (r.hoops || 0) + summary.hoops;
+    r.swishes = (r.swishes || 0) + summary.swishes;
+    r.bestCombo = Math.max(r.bestCombo || 0, summary.bestCombo);
+    data.records = r;
+    save();
+  }
+
   root.Store = {
     get: function (k) { return data[k]; },
     all: function () { return data; },
-    set: set, reset: reset, recordBest: recordBest, DEFAULTS: DEFAULTS
+    set: set, reset: reset, recordBest: recordBest, recordGame: recordGame, DEFAULTS: DEFAULTS
   };
 })(typeof self !== 'undefined' ? self : this);

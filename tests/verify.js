@@ -72,6 +72,38 @@ t('穿過籃框才算進球，從下往上不算', () => {
   assert.strictEqual(h.swishes, 1, '沒碰框是空心球');
   assert.strictEqual(h.score - h.bumps, 30, '空心球 30 分（彈跳墊另外每下 1 分）');
 });
+t('加分時段邊界與進球加分', () => {
+  assert.strictEqual(Rules.bonusActive(19.999), false);
+  assert.strictEqual(Rules.bonusActive(20), true);
+  assert.strictEqual(Rules.bonusActive(25), false);
+  assert.strictEqual(Rules.bonusActive(40), true);
+  function shot(time) {
+    const g = Rules.create('kids', 1);
+    g.t = time; g.ball.x = g.hoopX; g.ball.y = g.hoopY - 30;
+    g.ball.vx = 0; g.ball.vy = 200; g.ball.armed = true;
+    while (!g.hoops && g.t < time + 1) Rules.step(g, {});
+    return g.score;
+  }
+  assert.strictEqual(shot(20), 40);
+  assert.strictEqual(shot(25), 30);
+});
+t('單機累積紀錄保留並且重設設定不會清除', () => {
+  const vm = require('vm');
+  const fs = require('fs');
+  let stored = '';
+  const localStorage = { getItem: () => stored, setItem: (key, value) => { stored = value; } };
+  function load() {
+    const context = { localStorage }; context.self = context;
+    vm.runInNewContext(fs.readFileSync('public/js/storage.js', 'utf8'), context);
+    return context.Store;
+  }
+  const store = load();
+  store.recordGame({ hoops: 3, swishes: 2, bestCombo: 3 });
+  store.recordGame({ hoops: 1, swishes: 1, bestCombo: 2 });
+  store.reset();
+  const r = load().get('records');
+  assert.deepStrictEqual([r.games, r.hoops, r.swishes, r.bestCombo], [2, 4, 3, 3]);
+});
 t('新球發出時不能因為籃框掃過而直接進球', () => {
   for (const id of ['easy', 'normal', 'hard']) {
     for (let s = 1; s <= 20; s++) {

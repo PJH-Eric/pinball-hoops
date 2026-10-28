@@ -280,6 +280,10 @@
 
       var pressed = opts.pressed || [false];
       drawFlipper(g, geo, 0, view.fl[0], pressed[0], opts);
+      if (opts.timingHint && view.hint) {
+        g.save(); g.strokeStyle = '#22e4ff'; g.lineWidth = 6;
+        g.beginPath(); g.arc(view.ball.x, view.ball.y, Rules.BALL_R + 12, 0, Math.PI * 2); g.stroke(); g.restore();
+      }
 
       /* 球與拖尾 */
       if (view.ball) {
@@ -297,7 +301,7 @@
         r.trail.length = 0;
       }
 
-      drawHoopFront(g, geo, hx, hy, r.glow, opts);
+      drawHoopFront(g, geo, hx, hy, view.bonus ? 1 : r.glow, opts);
 
       /* 粒子與分數彈出 */
       if (!opts.reduceMotion) {

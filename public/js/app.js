@@ -112,6 +112,14 @@
     var b = Store.get('best') || {};
     var parts = Rules.DIFF_LIST.filter(function (d) { return b[d]; }).map(function (d) { return dn(d) + ' ' + b[d]; });
     $('#bestLine').textContent = parts.length ? T('home.best', { list: parts.join(T('sep.best')) }) : T('home.noBest');
+    var r = Store.get('records') || {};
+    $('#recordLine').textContent = T('records.stats', { games: r.games || 0, hoops: r.hoops || 0, swishes: r.swishes || 0, combo: r.bestCombo || 0 });
+    var achievements = [];
+    if (r.hoops >= 1) achievements.push(T('records.first'));
+    if (r.swishes >= 10) achievements.push(T('records.swish'));
+    if (r.bestCombo >= 5) achievements.push(T('records.combo'));
+    if (r.games >= 10) achievements.push(T('records.games'));
+    $('#achievementLine').textContent = T('records.achievements', { list: achievements.length ? achievements.join(T('sep.best')) : T('records.none') });
   }
 
   /* ---------- 單機：選難度 ---------- */
@@ -186,6 +194,7 @@
     dlg.appendChild(sw('set.reduce', 'reduceMotion'));
     dlg.appendChild(sw('set.contrast', 'contrast'));
     dlg.appendChild(sw('set.hints', 'showHints'));
+    dlg.appendChild(sw('set.timing', 'timingHint'));
 
     var btns = h('div', { class: 'actions' });
     var reset = h('button', { class: 'btn small ghost', type: 'button', text: T('set.reset') });
@@ -378,6 +387,7 @@
     }
 
     opts.bumperFlash = g.bumperFlash;
+    opts.timingHint = !!Store.get('timingHint');
     rend.draw(Rules.view(g), opts);
     if (p.mode === 'online') drawOpps(dt);
     updateHud();
@@ -450,6 +460,7 @@
     vibrate([100, 60, 100]);
     if (p.mode === 'solo') {
       p.newBest = Store.recordBest(g.diff.id, g.score);
+      Store.recordGame(Rules.summary(g));
       setTimeout(function () { if (play === p) { sfx(p.newBest ? 'win' : 'ui'); } }, 600);
       setTimeout(function () { if (play === p) showResult(); }, 900);
     } else {
@@ -588,8 +599,11 @@
       else for (var i = 0; i < balls; i++) ballsEl.appendChild(h('i', { class: 'ball-ico' + (i < g.ballNo - 1 || (!g.ball && i < g.ballNo) ? ' used' : '') }));
     }
     var ce = $('#hCombo');
-    ce.hidden = combo < 2;
-    if (combo >= 2) setText('hComboN', String(combo));
+    ce.hidden = combo < 1;
+    if (combo >= 1) setText('hComboN', String(combo));
+    $('#hComboTime').hidden = p.mode === 'spec';
+    if (p.mode !== 'spec' && combo) setText('hComboTime', Math.max(0, Rules.COMBO_WINDOW - (g.t - g.lastScoreT)).toFixed(1) + 's');
+    $('#hBonus').hidden = p.mode === 'spec' || !Rules.bonusActive(g.t);
     if (p.mode === 'solo' || p.mode === 'online') {
       var s = p.mode === 'solo' ? ('s' + g.hoops + ':' + g.swishes + ':' + g.bumps + ':' + g.bestCombo) : 'o';
       if (hudCache.sum !== s) { hudCache.sum = s; updateSummary(); }

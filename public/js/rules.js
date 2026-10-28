@@ -25,6 +25,8 @@
   var COMBO_WINDOW = 7;        /* 秒：這段時間內再進球才算連擊 */
   var COMBO_MAX = 5;
 
+  function bonusActive(t) { return t >= 20 && t % 20 < 5; }
+
   /* 四段難度：差別在籃框大小與移動、重力、球數、彈板與漏球空隙、彈跳墊數量 */
   var DIFFS = {
     kids: {
@@ -306,7 +308,7 @@
       var swish = !b.rim;
       g.combo = (g.t - g.lastScoreT <= COMBO_WINDOW) ? Math.min(COMBO_MAX, g.combo + 1) : 1;
       if (g.combo > g.bestCombo) g.bestCombo = g.combo;
-      var pts = (swish ? 30 : 20) * g.combo;
+      var pts = (swish ? 30 : 20) * g.combo + (bonusActive(g.t) ? 10 : 0);
       g.score += pts;
       g.hoops++;
       if (swish) g.swishes++;
@@ -385,13 +387,18 @@
       ball: g.ball ? { x: g.ball.x, y: g.ball.y, spin: g.ball.spin } : null,
       fl: [g.fl[0].a],
       hx: g.hoopX, hy: g.hoopY,
-      score: g.score, combo: g.combo, ballNo: g.ballNo, t: g.t
+      score: g.score, combo: g.combo, ballNo: g.ballNo, t: g.t,
+      bonus: bonusActive(g.t),
+      hint: !!(g.ball && !g.prevFlip &&
+        g.ball.x < g.geo.pivots[0].x - g.geo.flipLen * 0.25 &&
+        g.ball.x > g.geo.pivots[0].x - g.geo.flipLen * 0.8 &&
+        g.ball.y > 700 && g.ball.y < 790 && g.ball.vy >= 0)
     };
   }
 
   var api = {
     W: W, H: H, STEP: STEP, BALL_R: BALL_R, REST: REST, ACTIVE: ACTIVE, FLIP_R: FLIP_R,
-    COMBO_WINDOW: COMBO_WINDOW, COMBO_MAX: COMBO_MAX,
+    COMBO_WINDOW: COMBO_WINDOW, COMBO_MAX: COMBO_MAX, bonusActive: bonusActive,
     DIFFS: DIFFS, DIFF_LIST: DIFF_LIST,
     geometry: geometry, flipperTip: flipperTip, hoopXAt: hoopXAt, hoopYAt: hoopYAt,
     create: create, update: update, step: step, timeLeft: timeLeft,
