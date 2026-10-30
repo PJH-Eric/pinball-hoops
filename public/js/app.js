@@ -737,7 +737,7 @@
     if (!p || !p.resultShown) return;
     var ov = $('#overlay');
     ov.hidden = false; ov.textContent = ''; ov.style.background = '';
-    var dlg = h('div', { class: 'dialog', role: 'dialog', 'aria-modal': 'true', 'aria-label': T('res.aria') });
+    var dlg = h('div', { class: 'dialog', role: 'dialog', 'aria-modal': 'true', 'aria-label': T('res.aria'), 'data-result-share': '' });
     var btns = h('div', { class: 'dialog-btns' });
 
     if (p.mode === 'solo') {
