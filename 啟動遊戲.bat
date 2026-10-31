@@ -30,8 +30,8 @@ for %%M in (26) do (
 if not defined NODE_EXE (
   echo.
   echo 找不到 Node.js。
-  echo   想玩線上對戰：先安裝 Node.js https://nodejs.org
-  echo   只想單機玩　：直接用瀏覽器打開 public\index.html 就可以了
+  echo   安裝 Node.js 後即可在本機啟動遊戲：https://nodejs.org
+  echo   也可以直接用瀏覽器打開 public\index.html
   echo.
   pause
   exit /b 1

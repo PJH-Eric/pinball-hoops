@@ -42,7 +42,7 @@ assert.equal(runtime.I18N.lang, 'zh-Hant');
 assert.equal(memory.get('game-island-lang'), 'zh-Hant');
 assert.equal(new URL(runtime.location.href).searchParams.get('lang'), 'zh-Hant', 'Reload must retain the latest choice');
 runtime.I18N.setLang('en');
-assert.match(runtime.I18N.withLang('https://example.com/game?room=ABCD'), /room=ABCD&lang=en/);
+assert.match(runtime.I18N.withLang('https://example.com/game?campaign=summer'), /campaign=summer&lang=en/);
 runtime.I18N.register('zh-Hant', { nested: '難度：{level}', normal: '普通' }).register('en', { nested: 'Difficulty: {level}', normal: 'Normal' });
 assert.equal(runtime.I18N.message({ key: 'nested', params: { level: { key: 'normal' } } }), 'Difficulty: Normal');
 let input = { id: 'nickname', tagName: 'INPUT', type: 'text', value: '玩家 Alice', selectionStart: 2, selectionEnd: 4, setSelectionRange(a, b) { this.selectionStart = a; this.selectionEnd = b; } };

@@ -10,9 +10,9 @@ const { chromium } = require('playwright');
   try {
     await page.route('https://games.test/**', route => route.fulfill({
       contentType: 'text/html; charset=utf-8',
-      body: '<html lang="zh-TW"><head><title>Game</title><style>body{margin:0}section{width:300px;background:white}h2{margin:0;height:40px}#scores{height:80px;overflow:auto}.red{height:64px;background:rgb(255,0,0)}.green{height:100px;background:rgb(0,255,0)}button{background:blue}</style></head><body><section data-result-share><h2>Score 123</h2><div id="scores"><div class="red">First</div><div class="green">Last</div></div><p hidden>PRIVATE</p><button>Play again</button></section><p>CHAT SECRET</p></body></html>'
+      body: '<html lang="zh-TW"><head><title>Game</title><style>body{margin:0}section{width:300px;background:white}h2{margin:0;height:40px}#scores{height:80px;overflow:auto}.red{height:64px;background:rgb(255,0,0)}.green{height:100px;background:rgb(0,255,0)}button{background:blue}</style></head><body><section data-result-share><h2>Score 123</h2><div id="scores"><div class="red">First</div><div class="green">Last</div></div><p hidden>PRIVATE</p><button>Play again</button></section><p>OUTSIDE SECRET</p></body></html>'
     }));
-    await page.goto('https://games.test/game/?token=secret#room');
+    await page.goto('https://games.test/game/?campaign=secret#results');
     await page.addStyleTag({ content: '.red::before{content:"";display:block;width:8px;height:8px;box-shadow:0 0 2px color-mix(in srgb,red 55%,transparent)}' });
     await page.addScriptTag({ path: path.join(path.dirname(asset), 'locales/result-share.js') });
     await page.route('https://games.test/game/vendor/html2canvas.min.js', route => route.fulfill({

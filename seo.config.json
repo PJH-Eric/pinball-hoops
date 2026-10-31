@@ -1,12 +1,12 @@
 {
   "id": "pinball-hoops",
   "siteUrl": "https://pjh-eric.github.io/pinball-hoops/",
-  "title": "彈珠籃球｜免費線上投籃・多人競分",
-  "description": "免費線上彈珠籃球，點畫面揮動彈板，把籃球打進上下移動的籃框，在時間內挑戰最高分。提供四段難度、電腦對戰及線上多人同台競分，支援觀戰，免下載，手機平板可玩。",
+  "title": "彈珠籃球｜免費街機投籃挑戰",
+  "description": "免費彈珠籃球：揮動彈板，把球打進移動籃框，挑戰四段難度並刷新個人紀錄，支援手機與平板遊玩。",
   "lobbyUrl": "https://pjh-eric.github.io/game-lobby/",
   "googleSiteVerification": "",
   "genre": "運動",
-  "players": "1-4",
+  "players": "1",
   "iconUrl": "https://pjh-eric.github.io/pinball-hoops/favicon-96.png",
   "ogImage": "https://pjh-eric.github.io/pinball-hoops/assets/images/cover.webp",
   "ogImageAlt": "彈珠籃球 遊戲封面"

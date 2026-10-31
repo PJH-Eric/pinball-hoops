@@ -83,7 +83,6 @@
       case 'buzzer': tone(120, 0.9, 'sawtooth', 0.35); tone(126, 0.9, 'square', 0.18); break;
       case 'win': tone(523, 0.16, 'triangle', 0.3); tone(659, 0.16, 'triangle', 0.3, 0.14); tone(784, 0.16, 'triangle', 0.3, 0.28); tone(1047, 0.5, 'triangle', 0.32, 0.42); break;
       case 'ui': tone(700, 0.05, 'square', 0.1); break;
-      case 'chat': tone(880, 0.06, 'sine', 0.12); break;
     }
   }
 

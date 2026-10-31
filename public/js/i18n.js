@@ -9,7 +9,7 @@
  *   HTML：  <span data-i18n="menu.start">開始</span>
  *           <button data-i18n-attr="title=settings.open;aria-label=settings.open">
  *           <p data-i18n-html="help.body"></p>        （字典值可含受信任的 HTML 標籤）
- *   JS：    I18N.t('room.players', { n: 3 })           字典值可為字串（{n} 取代）或 function(params)
+ *   JS：    I18N.t('menu.start', { n: 3 })             字典值可為字串（{n} 取代）或 function(params)
  *           I18N.onChange(function (lang) { rerender(); })
  *           I18N.setLang('en')
  *   切換鈕：I18N.mountToggle({ after: settingsButtonEl })  放在設定鈕旁，樣式由各專案 CSS 的 .lang-toggle 控制

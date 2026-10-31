@@ -1,11 +1,15 @@
-/* ===== tests/verify.js — 規則核心、房間邏輯、設定解析的單元測試（零依賴）===== */
+/* ===== tests/verify.js — 彈珠籃球規則核心單元測試（零依賴）===== */
 'use strict';
 
 require('./seo.js');
 const assert = require('assert');
+const fs = require('node:fs');
+const path = require('node:path');
 const Rules = require('../public/js/rules.js');
-const { createHub, cleanName } = require('../lib/rooms.js');
 const { play, botInput } = require('./bot.js');
+const projectRoot = path.resolve(__dirname, '..');
+const readProjectFile = file => fs.readFileSync(path.join(projectRoot, file), 'utf8');
+const projectFileExists = file => fs.existsSync(path.join(projectRoot, file));
 
 let passed = 0;
 function t(name, fn) {
@@ -243,212 +247,121 @@ t('彈板尖端與左牆之間的缺口比球大、且彈板越難越短', () =>
   });
 });
 
-console.log('房間邏輯');
-function person(id, name) { return { id, name, roomId: null, role: null }; }
-function mkHub() { let now = 1000000; const hub = createHub({ now: () => now }); hub.advance = ms => { now += ms; }; return hub; }
-
-t('電腦玩家：房主一人加電腦就能開局，分數由伺服器真的打出來，結束後出現在排名', () => {
-  const hub = mkHub();
-  const h = person('h', '房主');
-  const room = hub.createRoom(h, { difficulty: 'easy' }).room;
-  assert.strictEqual(hub.start(h).code, 'need_two');
-  assert(hub.addCpu(h, 'hard').ok);
-  assert(!hub.addCpu(person('x', 'X'), 'hard').ok, '非房主不能加電腦');
-  const cpu = hub.players(room).find(m => m.cpu);
-  assert(cpu && cpu.ready);
-  assert(hub.start(h).ok);
-  hub.advance(3000 + 45000); hub.tick();
-  assert(cpu.score >= 0 && (cpu.sim.g.t > 20 || cpu.sim.g.status !== 'playing') && cpu.sim.g.t <= 46, '電腦要跟著時間推進：' + cpu.sim.g.t);
-  hub.advance(60000); hub.tick();
-  assert.strictEqual(room.phase, 'ended', '時間到就結束');
-  assert(room.result.some(r => r.cpu), '排名要有電腦');
+console.log('單機版本清理');
+t('移除房間與 WebSocket 後端檔案', () => {
+  assert.strictEqual(projectFileExists('.env.example'), false);
+  assert.strictEqual(projectFileExists('lib/cpu.js'), false);
+  assert.strictEqual(projectFileExists('lib/rooms.js'), false);
+  assert.strictEqual(projectFileExists('lib/ws.js'), false);
+  assert.strictEqual(projectFileExists('public/js/config.js'), false);
+  assert.strictEqual(projectFileExists('public/js/net.js'), false);
+  assert.strictEqual(projectFileExists('render.yaml'), false);
 });
-t('在指定空位加入電腦，電腦停在該位置，後加入的玩家補最小空位', () => {
-  const hub = mkHub();
-  const h = person('h', '房主');
-  const room = hub.createRoom(h, {}).room;
-  hub.addCpu(h, 'easy', 2);
-  hub.addCpu(h, 'easy', 2);                                  /* 2 號已被占用 → 改放編號最小的空位 */
-  const g = person('g', '客人'); hub.join(g, room.id, { want: 'play' });
-  const seats = hub.viewFor(room, 'h').players.map(p => p.id === 'h' ? 'h' : p.id === 'g' ? 'g' : 'cpu@' + p.seat);
-  assert.deepStrictEqual(hub.players(room).map(m => m.seat), [0, 1, 2, 3], '四個座位都被坐滿且不重複');
-  assert.strictEqual(hub.players(room)[2].cpu, true, '指定的 2 號座位是電腦');
-  assert.strictEqual(hub.players(room)[1].cpu, true, '第二隻電腦補最小空位 1');
-  assert.strictEqual(hub.players(room)[3].id, 'g', '客人補剩下的 3');
-  assert(seats.length === 4);
+t('移除連線狀態與故障顯示資產', () => {
+  assert.strictEqual(projectFileExists('public/css/latency.css'), false);
+  assert.strictEqual(projectFileExists('public/css/server-outage.css'), false);
+  assert.strictEqual(projectFileExists('public/js/latency.js'), false);
+  assert.strictEqual(projectFileExists('public/js/server-outage.js'), false);
+  assert.strictEqual(projectFileExists('scripts/server-outage-browser-check.cjs'), false);
+  assert.strictEqual(projectFileExists('docs/qa-server-outage-2026-10-26.md'), false);
+  assert.strictEqual(projectFileExists('tests/server-outage.cjs'), false);
 });
-t('電腦玩家不算真人：真人都離開房間就關閉；電腦占座位', () => {
-  const hub = mkHub();
-  const h = person('h', '房主');
-  const room = hub.createRoom(h, {}).room;
-  hub.addCpu(h, 'easy'); hub.addCpu(h, 'normal'); hub.addCpu(h, 'hard');
-  assert.strictEqual(hub.addCpu(h, 'hard').code, 'seats_full');
-  const id = hub.players(room).find(m => m.cpu).id;
-  assert.strictEqual(hub.kick(h, id), id);
-  assert.strictEqual(hub.players(room).length, 3);
-  hub.leave(h);
-  assert(room.closed, '只剩電腦要關房');
+t('移除 Render 網址注入與線上檢查工具', () => {
+  assert.strictEqual(projectFileExists('scripts/inject-server-url.js'), false);
+  assert.strictEqual(projectFileExists('scripts/online-check.js'), false);
 });
-t('暱稱消毒：去角括號／控制字元、限 12 字、空白給隨機名', () => {
-  assert.strictEqual(cleanName('<b>阿明</b>'), 'b阿明/b');
-  assert.strictEqual(cleanName('x'.repeat(40)).length, 12);
-  assert(cleanName('   ').length > 0);
-  assert(!/[<>]/.test(cleanName('<script>')));
+t('本機伺服器只提供靜態頁面', () => {
+  const server = readProjectFile('server.js');
+  assert.ok(server.includes('http.createServer'));
+  assert.ok(server.includes("'127.0.0.1'"));
+  assert.ok(!server.includes("require('./lib/rooms.js')"));
+  assert.ok(!server.includes("require('./lib/ws.js')"));
+  assert.ok(!server.includes('onrender.com'));
 });
-t('建立房間、加入、座位上限 4，其餘轉觀戰', () => {
-  const hub = mkHub();
-  const h = person('h', '房主');
-  const r = hub.createRoom(h, { difficulty: 'easy' }).room;
-  const ps = [1, 2, 3].map(i => person('p' + i, 'P' + i));
-  ps.forEach(p => assert.strictEqual(hub.join(p, r.id, {}).role, 'player'));
-  const extra = person('x', 'X');
-  const j = hub.join(extra, r.id, {});
-  assert.strictEqual(j.role, 'spec');
-  assert.strictEqual(j.notice, 'seats_full');
+t('本機伺服器不建立即時連線或房間路由', () => {
+  const server = readProjectFile('server.js');
+  assert.ok(!server.includes('WebSocket'));
+  assert.ok(!server.includes("'upgrade'"));
+  assert.ok(!server.includes('ALLOW_ORIGIN'));
+  assert.ok(!server.includes("'/health'"));
+  assert.ok(!server.includes('room_create'));
 });
-t('邀請：以 token 決定角色，改暱稱不改權限；無效／撤銷／過期有不同代碼', () => {
-  const hub = mkHub();
-  const h = person('h', 'H');
-  const room = hub.createRoom(h, { listed: false }).room;
-  const view = hub.viewFor(room, 'h');
-  assert(view.invite.play && view.invite.watch);
-  assert.strictEqual(hub.join(person('a', 'A'), room.id, {}).code, 'invite_required', '不公開房間需要邀請');
-  const w = hub.join(person('w', '想當玩家的人'), room.id, { token: view.invite.watch, want: 'play' });
-  assert.strictEqual(w.role, 'spec', '觀戰邀請不能自己改成玩家');
-  const p = hub.join(person('p', 'P'), room.id, { token: view.invite.play, want: 'watch' });
-  assert.strictEqual(p.role, 'player');
-  assert.strictEqual(hub.join(person('z', 'Z'), room.id, { token: 'bad' }).code, 'invite_invalid');
-  hub.regenInvite(h);
-  assert.strictEqual(hub.join(person('y', 'Y'), room.id, { token: view.invite.play }).code, 'invite_revoked');
-  const fresh = hub.viewFor(room, 'h').invite;
-  hub.advance(7 * 3600 * 1000);
-  assert.strictEqual(hub.join(person('e', 'E'), room.id, { token: fresh.play }).code, 'invite_expired');
+t('首頁移除線上大廳與房間畫面', () => {
+  const html = readProjectFile('public/index.html');
+  assert.ok(!html.includes('id="s-lobby"'));
+  assert.ok(!html.includes('id="s-room"'));
+  assert.ok(!html.includes('data-screen="lobby"'));
+  assert.ok(!html.includes('data-screen="room"'));
 });
-t('開局條件：至少 2 人、全部準備；開局後新人只能觀戰', () => {
-  const hub = mkHub();
-  const h = person('h', 'H'), a = person('a', 'A');
-  const room = hub.createRoom(h, {}).room;
-  assert.strictEqual(hub.start(h).code, 'need_two');
-  hub.join(a, room.id, {});
-  assert.strictEqual(hub.start(h).code, 'not_ready');
-  hub.setReady(a, true);
-  assert(hub.start(h).ok);
-  assert.strictEqual(hub.start(a).ok, false, '非房主不能開局');
-  const late = hub.join(person('l', 'L'), room.id, {});
-  assert.strictEqual(late.role, 'spec');
-  assert.strictEqual(late.notice, 'match_running');
+t('首頁移除聊天室、觀戰與邀請控制項', () => {
+  const html = readProjectFile('public/index.html');
+  assert.ok(!html.includes('id="chatLog"'));
+  assert.ok(!html.includes('id="chatForm"'));
+  assert.ok(!html.includes('data-spectator'));
+  assert.ok(!html.includes('inviteLink'));
 });
-t('分數回報：單調遞增、超過物理速度的值會被丟掉', () => {
-  const hub = mkHub();
-  const h = person('h', 'H'), a = person('a', 'A');
-  const room = hub.createRoom(h, { difficulty: 'normal' }).room;
-  hub.join(a, room.id, {}); hub.setReady(a, true); hub.start(h);
-  hub.advance(3000 + 10000);
-  hub.report(a, { score: 50, hoops: 2 });
-  assert.strictEqual(room.members.get('a').score, 50);
-  hub.report(a, { score: 20 });
-  assert.strictEqual(room.members.get('a').score, 50, '分數不能倒退');
-  hub.report(a, { score: 999999 });
-  assert.strictEqual(room.members.get('a').score, 50, '不可能的分數要丟掉');
+t('遊戲控制器不依賴線上連線模組', () => {
+  const app = readProjectFile('public/js/app.js');
+  assert.ok(!app.includes('Net.'));
+  assert.ok(!app.includes('Config.'));
+  assert.ok(!app.includes('ServerOutage'));
+  assert.ok(!app.includes('GameNet'));
+  assert.ok(!app.includes('WebSocket'));
 });
-t('全部完成或時間到 → 結束並排名（同分同名次）', () => {
-  const hub = mkHub();
-  const h = person('h', 'H'), a = person('a', 'A');
-  const room = hub.createRoom(h, { difficulty: 'normal' }).room;
-  hub.join(a, room.id, {}); hub.setReady(a, true); hub.start(h);
-  hub.advance(3000 + 30000);
-  hub.report(h, { score: 100, done: true });
-  hub.report(a, { score: 100, hoops: 1, done: true });
-  assert.strictEqual(room.phase, 'ended');
-  assert.strictEqual(room.result[0].place, 1);
-  assert.strictEqual(room.result[1].place, room.result[0].place === 1 && room.result[1].score === room.result[0].score ? 1 : 2);
-  hub.again(h);
-  assert.strictEqual(room.phase, 'lobby');
-  assert.strictEqual(room.members.get('a').ready, false);
+t('遊戲控制器移除房間、聊天與觀戰流程', () => {
+  const app = readProjectFile('public/js/app.js');
+  assert.ok(!app.includes('room_create'));
+  assert.ok(!app.includes('room_join'));
+  assert.ok(!app.includes('invite'));
+  assert.ok(!app.includes('spectator'));
+  assert.ok(!app.includes('chat'));
 });
-t('時間到＋寬限後即使有人沒回報也會結束', () => {
-  const hub = mkHub();
-  const h = person('h', 'H'), a = person('a', 'A');
-  const room = hub.createRoom(h, { difficulty: 'normal' }).room;
-  hub.join(a, room.id, {}); hub.setReady(a, true); hub.start(h);
-  hub.advance(3000 + 90000 + 3600);
-  hub.tick();
-  assert.strictEqual(room.phase, 'ended');
+t('樣式表移除大廳與房間元件', () => {
+  const css = readProjectFile('public/css/style.css');
+  assert.ok(!css.includes('.lobby-grid'));
+  assert.ok(!css.includes('.room-grid'));
+  assert.ok(!css.includes('.online-count'));
+  assert.ok(!css.includes('.seats'));
 });
-t('零實體玩家 → 立即關房：邀請失效、從大廳移除、通知觀戰者', () => {
-  const hub = mkHub();
-  const h = person('h', 'H'), s = person('s', '觀戰者');
-  const room = hub.createRoom(h, {}).room;
-  const inv = hub.viewFor(room, 'h').invite;
-  hub.join(s, room.id, { token: inv.watch });
-  hub.drain();
-  hub.leave(h);
-  assert(!hub.rooms.has(room.id), '房間應已移除');
-  assert.strictEqual(hub.listRooms().length, 0);
-  const ev = hub.drain();
-  const closed = ev.find(e => e.kind === 'closed');
-  assert(closed && closed.memberIds.includes('s'), '要通知還在房內的觀戰者');
-  assert.strictEqual(hub.join(person('n', 'N'), room.id, { token: inv.play }).code, 'room_closed', '已關房間的邀請失效');
-  assert.strictEqual(hub.resume(h, room.id).code, 'room_closed', '重新連線不能讓房間復活');
+t('樣式表移除聊天室、觀戰與對手畫面', () => {
+  const css = readProjectFile('public/css/style.css');
+  assert.ok(!css.includes('.chat'));
+  assert.ok(!css.includes('.spec-tabs'));
+  assert.ok(!css.includes('.opp-col'));
+  assert.ok(!css.includes('data-spectator'));
 });
-t('斷線也算：最後一位真人斷線 → 關房（觀戰者不算）', () => {
-  const hub = mkHub();
-  const h = person('h', 'H'), a = person('a', 'A'), s = person('s', 'S');
-  const room = hub.createRoom(h, {}).room;
-  hub.join(a, room.id, {}); hub.join(s, room.id, { want: 'watch' });
-  hub.markDisconnected(h);
-  assert(hub.rooms.has(room.id), '還有一位真人，房間要保留');
-  assert.strictEqual(hub.viewFor(room, 'a').hostId, 'a', '房主斷線要換人');
-  hub.markDisconnected(a);
-  assert(!hub.rooms.has(room.id), '只剩觀戰者，房間要關閉');
+t('分析事件不再追蹤房間或觀戰事件', () => {
+  const analytics = readProjectFile('public/js/analytics.js');
+  assert.ok(!analytics.includes('room_create'));
+  assert.ok(!analytics.includes('room_join'));
+  assert.ok(!analytics.includes('room_leave'));
+  assert.ok(!analytics.includes('spectator_join'));
 });
-t('對局中斷線保留分數，原連線可重連；全部斷線仍會關房', () => {
-  const hub = mkHub();
-  const h = person('h', 'H'), a = person('a', 'A');
-  const room = hub.createRoom(h, { difficulty: 'normal' }).room;
-  hub.join(a, room.id, {}); hub.setReady(a, true); hub.start(h);
-  hub.advance(8000);
-  hub.report(a, { score: 40 });
-  hub.markDisconnected(a);
-  assert.strictEqual(room.members.get('a').score, 40);
-  assert(hub.resume(a, room.id).ok, '對局中可重連');
-  assert.strictEqual(room.members.get('a').connected, true);
-  hub.markDisconnected(a); hub.markDisconnected(h);
-  assert(!hub.rooms.has(room.id));
+t('套件指令不再設定線上檢查或網址注入', () => {
+  const pkg = readProjectFile('package.json');
+  assert.ok(!pkg.includes('test:online'));
+  assert.ok(!pkg.includes('online-check'));
+  assert.ok(!pkg.includes('inject-server-url'));
 });
-t('聊天：消毒、限長、限速', () => {
-  const hub = mkHub();
-  const h = person('h', 'H');
-  hub.createRoom(h, {});
-  const m = hub.chat(h, '<img src=x>' + 'a'.repeat(200));
-  assert(!/[<>]/.test(m.msg.text)); assert(m.msg.text.length <= 80);
-  let ok = 0;
-  for (let i = 0; i < 12; i++) if (hub.chat(h, 'hi')) ok++;
-  assert(ok <= 5, '5 秒內最多 5 句');
+t('搜尋摘要只描述單機玩法', () => {
+  const seo = readProjectFile('seo.config.json') + readProjectFile('seo.gameplay.json');
+  assert.ok(!/multiplayer/i.test(seo));
+  assert.ok(!seo.includes('線上多人'));
+  assert.ok(!seo.includes('觀戰'));
 });
-t('房主可請出玩家；非房主不行', () => {
-  const hub = mkHub();
-  const h = person('h', 'H'), a = person('a', 'A');
-  const room = hub.createRoom(h, {}).room;
-  hub.join(a, room.id, {});
-  assert.strictEqual(hub.kick(a, 'h'), null);
-  assert.strictEqual(hub.kick(h, 'a'), 'a');
-  assert(!room.members.has('a'));
+t('Pages 部署不再注入 Render 遊戲伺服器網址', () => {
+  const workflow = readProjectFile('.github/workflows/pages.yml');
+  assert.ok(!workflow.includes('GAME_SERVER_URL'));
+  assert.ok(!workflow.includes('RENDER'));
+  assert.ok(!workflow.includes('onrender.com'));
+  assert.ok(!workflow.includes('inject-server-url'));
+  assert.ok(workflow.includes('public'));
 });
-
-console.log('設定解析');
-t('server URL：query／同源／無效／https 擋 http', () => {
-  global.self = undefined;
-  const src = require('fs').readFileSync(require('path').join(__dirname, '../public/js/config.js'), 'utf8');
-  const root = {};
-  new Function('self', src).call(root, root);
-  const R = root.Config.resolve;
-  assert.strictEqual(R('', '', 'http:', 'http://localhost:3200').source, 'same-origin');
-  assert.strictEqual(R('https://a.onrender.com/', '', 'https:', 'https://x.github.io').url, 'https://a.onrender.com');
-  assert.strictEqual(R('', 'https://b.com', 'https:', 'https://x.github.io').source, 'query');
-  assert.strictEqual(R('ftp://x', '', 'https:', 'https://x').status, 'invalid');
-  assert.strictEqual(R('http://a.com', '', 'https:', 'https://x').status, 'invalid');
-  assert.strictEqual(R('', '', 'file:', 'null').status, 'unset');
+t('啟動說明不再引導線上對戰', () => {
+  const launcher = readProjectFile('啟動遊戲.bat');
+  assert.ok(!launcher.includes('線上對戰'));
+  assert.ok(!launcher.includes('Render'));
+  assert.ok(!launcher.includes('GAME_SERVER_URL'));
 });
 
 console.log('\n' + passed + ' 項通過' + (process.exitCode ? '（有失敗）' : ''));
